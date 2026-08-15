@@ -10,7 +10,7 @@ import { Pill } from "@/components/ui/cv";
 export function LandingDemo() {
   const events = useMemo(() => runMockExecution("insertion-sort"), []);
   const ex = getExample("insertion-sort");
-  const code = ex ? getExampleCode(ex, "python") : "";
+  const code = ex ? getExampleCode(ex, "cpp") : "";
   const [step, setStep] = useState(0);
 
   useEffect(() => {
@@ -28,7 +28,7 @@ export function LandingDemo() {
   return (
     <div className="glass animate-panel-in overflow-hidden rounded-[18px]">
       <div className="flex items-center justify-between gap-3 border-b border-hairline px-4 py-2.5">
-        <span className="font-mono text-[11.5px] text-text-secondary">insertion_sort.py</span>
+        <span className="font-mono text-[11.5px] text-text-secondary">insertion_sort.cpp</span>
         <Pill tone="accent">step {step + 1}/{events.length}</Pill>
       </div>
 
@@ -36,7 +36,7 @@ export function LandingDemo() {
         <CodeEditor
           value={code}
           onChange={() => {}}
-          language="python"
+          language="cpp"
           readOnly
           activeLine={viz?.line}
           minHeight={280}

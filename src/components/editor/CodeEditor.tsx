@@ -17,7 +17,7 @@ export type CodeEditorProps = {
 export function CodeEditor({
   value,
   onChange,
-  language = "python",
+  language = "cpp",
   activeLine,
   errorLine,
   readOnly,

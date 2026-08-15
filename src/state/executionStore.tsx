@@ -257,7 +257,7 @@ type State = {
 const initialState: State = {
   title: "Untitled",
   exampleSlug: null,
-  language: "python",
+  language: "cpp",
   code: "",
   inputMode: "form",
   inputKind: "variables",
@@ -396,7 +396,7 @@ function reducer(state: State, action: Action): State {
         inputText,
         paramValues,
         visualizationType: ex.visualizationType,
-        selectedVariable: ex.targetVariable,
+        selectedVariable: ex.targetVariable ?? null,
         dpDimensions: ex.slug === "knapsack" ? "2D" : "1D",
       };
     }

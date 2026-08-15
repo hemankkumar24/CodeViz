@@ -5,7 +5,7 @@ import type { SupportedLanguage } from '@/types/languages'
 
 export function CodeView({
   code,
-  language = 'python',
+  language = 'cpp',
   currentLine,
   errorLine,
   className,
@@ -79,7 +79,7 @@ export function CodeView({
                     <span> </span>
                   ) : (
                     tokenizeLine(line, language).map((t, ti) => (
-                      <span key={ti} className={tokenClass[t.kind]}>
+                      <span key={ti} className={tokenClass[t.type]}>
                         {t.value}
                       </span>
                     ))

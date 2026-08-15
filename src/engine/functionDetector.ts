@@ -218,18 +218,44 @@ function detectFunctionsRegex(code: string): DetectedFunction[] {
   return functions;
 }
 
-export function selectEntryFunction(functions: DetectedFunction[]): DetectedFunction | null {
+export function selectEntryFunction(functions: DetectedFunction[], rawCode = ""): DetectedFunction | null {
   if (functions.length === 0) return null;
   if (functions.length === 1) return functions[0]!;
 
-  const nonHelpers = functions.filter((f) => !f.name.startsWith("_") && !f.name.startsWith("#") && !f.name.toLowerCase().includes("util") && f.name !== "helper");
-  if (nonHelpers.length > 0) {
-    const methods = nonHelpers.filter((f) => f.isClassMethod);
-    if (methods.length > 0) return methods[0]!;
-    return nonHelpers[0]!;
+  // 1. If any function is called inside another function, the caller is the entry function
+  const isCalledByOther = new Set<string>();
+  for (const fn of functions) {
+    for (const other of functions) {
+      if (fn.name !== other.name && rawCode.includes(other.name + "(")) {
+        const fnDefIdx = rawCode.indexOf(fn.name);
+        const otherCallIdx = rawCode.indexOf(other.name + "(", fnDefIdx);
+        if (otherCallIdx !== -1) {
+          isCalledByOther.add(other.name);
+        }
+      }
+    }
   }
 
-  return functions[0]!;
+  const topLevelCandidates = functions.filter((f) => !isCalledByOther.has(f.name));
+  const candidates = topLevelCandidates.length > 0 ? topLevelCandidates : functions;
+
+  const nonHelpers = candidates.filter(
+    (f) =>
+      !f.name.startsWith("_") &&
+      !f.name.startsWith("#") &&
+      !f.name.toLowerCase().includes("util") &&
+      !f.name.toLowerCase().includes("helper") &&
+      f.name !== "dfsHelper" &&
+      f.name !== "bfsHelper"
+  );
+
+  const pool = nonHelpers.length > 0 ? nonHelpers : candidates;
+
+  const classMethods = pool.filter((f) => f.isClassMethod);
+  if (classMethods.length > 0) return classMethods[classMethods.length - 1]!;
+
+  // In C++ / Java, the caller function is placed last after its helpers
+  return pool[pool.length - 1]!;
 }
 
 export function analyzeCode(code: string, language: SupportedLanguage): {
@@ -239,11 +265,10 @@ export function analyzeCode(code: string, language: SupportedLanguage): {
   const jsCode = transpileToJS(code, language);
   let functions = detectFunctions(jsCode);
 
-  // If no functions detected via transpiled JS, try raw code
   if (functions.length === 0) {
     functions = detectFunctionsRegex(code);
   }
 
-  const entryFunction = selectEntryFunction(functions);
+  const entryFunction = selectEntryFunction(functions, code);
   return { functions, entryFunction };
 }
