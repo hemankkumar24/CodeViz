@@ -197,28 +197,46 @@ export class Tracer {
       highlighted.push({ structure: c.structure, path: c.path });
     }
 
-    // 2. Active 2D matrix / DP table cell highlighting (e.g. [i, j], [i, w], [r, c])
+    // 2. Active 2D matrix / DP table cell highlighting
     for (const [sName, sVal] of Object.entries(structures)) {
       if (is2DMatrix(sVal) && sVal.length > 0) {
         const rows = sVal.length;
         const cols = sVal[0]?.length ?? 0;
 
-        const rowCandidates = ["i", "r", "row", "y", "u", "node"];
-        const colCandidates = ["j", "w", "c", "col", "x", "v", "k"];
+        const rowKeys = ["i", "r", "row", "y", "u", "node"];
+        const colKeys = ["j", "w", "c", "col", "x", "v", "k"];
 
-        let foundPair = false;
-        for (const rKey of rowCandidates) {
-          if (foundPair) break;
-          const rVal = variables[rKey];
-          if (typeof rVal === "number" && rVal >= 0 && rVal < rows) {
-            for (const cKey of colCandidates) {
-              const cVal = variables[cKey];
-              if (typeof cVal === "number" && cVal >= 0 && cVal < cols) {
-                highlighted.push({ structure: sName, path: [rVal, cVal] });
-                foundPair = true;
-                break;
-              }
-            }
+        let rVal: number | undefined = undefined;
+        let cVal: number | undefined = undefined;
+
+        for (const k of rowKeys) {
+          const v = variables[k];
+          if (typeof v === "number" && v >= 0 && v < rows) {
+            rVal = v;
+            break;
+          }
+        }
+
+        for (const k of colKeys) {
+          const v = variables[k];
+          if (typeof v === "number" && v >= 0 && v < cols) {
+            cVal = v;
+            break;
+          }
+        }
+
+        if (rVal !== undefined && cVal !== undefined) {
+          // Both row and column pointers are active -> exact intersecting cell!
+          highlighted.push({ structure: sName, path: [rVal, cVal] });
+        } else if (rVal !== undefined) {
+          // Only row pointer active -> highlight cells in row rVal
+          for (let c = 0; c < cols; c++) {
+            highlighted.push({ structure: sName, path: [rVal, c] });
+          }
+        } else if (cVal !== undefined) {
+          // Only column pointer active -> highlight cells in column cVal
+          for (let r = 0; r < rows; r++) {
+            highlighted.push({ structure: sName, path: [r, cVal] });
           }
         }
       } else if (is1DArray(sVal)) {
