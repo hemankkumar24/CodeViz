@@ -12,12 +12,62 @@ export function clearCapturedLogs(): void {
   capturedLogs.length = 0;
 }
 
-// Polyfill array .add() for Java compatibility
+// Polyfill array methods for C++ & Java container compatibility
 if (!Array.prototype.hasOwnProperty("add")) {
   Object.defineProperty(Array.prototype, "add", {
     value: function (x: unknown) {
       this.push(x);
       return this;
+    },
+    configurable: true,
+    writable: true,
+  });
+}
+
+if (!Array.prototype.hasOwnProperty("front")) {
+  Object.defineProperty(Array.prototype, "front", {
+    value: function () {
+      return this[0];
+    },
+    configurable: true,
+    writable: true,
+  });
+}
+
+if (!Array.prototype.hasOwnProperty("back")) {
+  Object.defineProperty(Array.prototype, "back", {
+    value: function () {
+      return this[this.length - 1];
+    },
+    configurable: true,
+    writable: true,
+  });
+}
+
+if (!Array.prototype.hasOwnProperty("top")) {
+  Object.defineProperty(Array.prototype, "top", {
+    value: function () {
+      return this[this.length - 1];
+    },
+    configurable: true,
+    writable: true,
+  });
+}
+
+if (!Array.prototype.hasOwnProperty("empty")) {
+  Object.defineProperty(Array.prototype, "empty", {
+    value: function () {
+      return this.length === 0;
+    },
+    configurable: true,
+    writable: true,
+  });
+}
+
+if (!Array.prototype.hasOwnProperty("size")) {
+  Object.defineProperty(Array.prototype, "size", {
+    value: function () {
+      return this.length;
     },
     configurable: true,
     writable: true,
@@ -77,18 +127,48 @@ const BUILTINS: Record<string, unknown> = {
   int: (x: unknown) => (typeof x === "number" ? Math.trunc(x) : parseInt(String(x), 10)),
   len: (x: unknown) => (Array.isArray(x) || typeof x === "string" ? x.length : (x as { size?: number })?.size ?? 0),
   sum: (arr: number[]) => (Array.isArray(arr) ? arr.reduce((a, b) => a + b, 0) : 0),
-  math: {
-    inf: Infinity,
-    nan: NaN,
-    isinf: (x: number) => !isFinite(x),
-    isnan: isNaN,
-    floor: Math.floor,
-    ceil: Math.ceil,
-    sqrt: Math.sqrt,
-    pow: Math.pow,
-    abs: Math.abs,
-    max: Math.max,
-    min: Math.min,
+  // C++ STL Polyfills & Containers
+  vector: class Vector extends Array {
+    constructor(...args: unknown[]) {
+      if (args.length === 1 && typeof args[0] === "number") {
+        super(args[0]);
+        this.fill(0);
+      } else if (args.length === 2 && typeof args[0] === "number") {
+        super(args[0]);
+        this.fill(args[1]);
+      } else {
+        super(...(args as number[]));
+      }
+    }
+  },
+  queue: class Queue extends Array {
+    override push(x: unknown): number {
+      super.push(x);
+      return this.length;
+    }
+    override pop(): unknown {
+      return this.shift();
+    }
+    front() {
+      return this[0];
+    }
+    empty() {
+      return this.length === 0;
+    }
+    size() {
+      return this.length;
+    }
+  },
+  stack: class Stack extends Array {
+    empty() {
+      return this.length === 0;
+    }
+    top() {
+      return this[this.length - 1];
+    }
+    size() {
+      return this.length;
+    }
   },
   console: {
     log: (...args: unknown[]) => {

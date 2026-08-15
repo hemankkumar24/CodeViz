@@ -442,21 +442,33 @@ function transpileCpp(code: string): string {
       continue;
     }
 
-    // 2D DP vector: vector<vector<int>> dp(n + 1, vector<int>(capacity + 1, 0));
-    if (/vector<vector<[^>]+>>\s+(\w+)\s*\((.+?),\s*vector<[^>]+>\((.+?),\s*(.+?)\)\);/.test(line)) {
+    // 2D DP vector: vector<vector<int>> dp(n + 1, vector<int>(capacity + 1, 0)); or without fill value
+    if (/vector\s*<\s*vector\s*<[^>]+>\s*>\s+(\w+)\s*\((.+?),\s*vector\s*<[^>]+>\s*\((.+?)\)\);/.test(line)) {
       line = line.replace(
-        /vector<vector<[^>]+>>\s+(\w+)\s*\((.+?),\s*vector<[^>]+>\((.+?),\s*(.+?)\)\);/,
-        "let $1 = Array.from({length: $2}, () => new Array($3).fill($4));",
+        /vector\s*<\s*vector\s*<[^>]+>\s*>\s+(\w+)\s*\((.+?),\s*vector\s*<[^>]+>\s*\((.+?)\)\);/,
+        (_, name, rows, inner) => {
+          const innerParts = splitTopLevelCommas(inner);
+          const cols = innerParts[0]!;
+          const fill = innerParts.length > 1 ? innerParts[1]! : "0";
+          return `let ${name} = Array.from({length: ${rows}}, () => new Array(${cols}).fill(${fill}));`;
+        },
       );
       result.push(line);
       continue;
     }
 
-    // 1D DP vector: vector<int> dp(n + 1, 0); or vector<int> dp(nums.size(), 1);
-    if (/vector<[^>]+>\s+(\w+)\s*\((.+?),\s*(.+?)\);/.test(line)) {
+    // 1D DP vector: vector<int> dp(n + 1); or vector<int> dp(n + 1, 0);
+    if (/vector\s*<[^>]+>\s+(\w+)\s*\((.+?)\);/.test(line)) {
       line = line.replace(
-        /vector<[^>]+>\s+(\w+)\s*\((.+?),\s*(.+?)\);/,
-        "let $1 = new Array($2).fill($3);",
+        /vector\s*<[^>]+>\s+(\w+)\s*\((.+?)\);/,
+        (_, name, args) => {
+          const parts = splitTopLevelCommas(args);
+          if (parts.length === 1) {
+            return `let ${name} = new Array(${parts[0]}).fill(0);`;
+          } else {
+            return `let ${name} = new Array(${parts[0]}).fill(${parts[1]});`;
+          }
+        },
       );
       line = line.replace(/\.size\(\)/g, ".length");
       result.push(line);
@@ -464,9 +476,11 @@ function transpileCpp(code: string): string {
     }
 
     // Initializer list vector / set: vector<int> queue = {start}; or unordered_set<int> seen = {start};
-    if (/(?:vector<[^>]+>|unordered_set<[^>]+>|unordered_map<[^>]+>|pair<[^>]+>)\s+(\w+)\s*=\s*\{([^}]+)\};/.test(line)) {
-      if (line.includes("unordered_set")) {
-        line = line.replace(/unordered_set<[^>]+>\s+(\w+)\s*=\s*\{([^}]+)\};/, "let $1 = new Set([$2]);");
+    if (/(?:vector<[^>]+>|unordered_set<[^>]+>|set<[^>]+>|unordered_map<[^>]+>|map<[^>]+>|pair<[^>]+>)\s+(\w+)\s*=\s*\{([^}]+)\};/.test(line)) {
+      if (line.includes("unordered_set") || line.includes("set<")) {
+        line = line.replace(/(?:unordered_set<[^>]+>|set<[^>]+>)\s+(\w+)\s*=\s*\{([^}]+)\};/, "let $1 = new Set([$2]);");
+      } else if (line.includes("map")) {
+        line = line.replace(/(?:unordered_map<[^>]+>|map<[^>]+>)\s+(\w+)\s*=\s*\{([^}]+)\};/, "let $1 = new Map([$2]);");
       } else {
         line = line.replace(/(?:vector<[^>]+>|pair<[^>]+>)\s+(\w+)\s*=\s*\{([^}]+)\};/, "let $1 = [$2];");
       }
@@ -474,14 +488,42 @@ function transpileCpp(code: string): string {
       continue;
     }
 
-    // Empty vector / set: vector<int> order; unordered_set<int> seen;
-    if (/vector<[^>]+>\s+(\w+);/.test(line)) {
-      line = line.replace(/vector<[^>]+>\s+(\w+);/, "let $1 = [];");
+    // Empty containers: vector, queue, stack, deque, unordered_set, set, unordered_map, map
+    if (/vector\s*<[^>]+>\s+(\w+);/.test(line)) {
+      line = line.replace(/vector\s*<[^>]+>\s+(\w+);/, "let $1 = [];");
       result.push(line);
       continue;
     }
-    if (/unordered_set<[^>]+>\s+(\w+);/.test(line)) {
-      line = line.replace(/unordered_set<[^>]+>\s+(\w+);/, "let $1 = new Set();");
+    if (/(?:queue|stack|deque|priority_queue)\s*<[^>]+>\s+(\w+);/.test(line)) {
+      line = line.replace(/(?:queue|stack|deque|priority_queue)\s*<[^>]+>\s+(\w+);/, "let $1 = [];");
+      result.push(line);
+      continue;
+    }
+    if (/(?:unordered_set|set)\s*<[^>]+>\s+(\w+);/.test(line)) {
+      line = line.replace(/(?:unordered_set|set)\s*<[^>]+>\s+(\w+);/, "let $1 = new Set();");
+      result.push(line);
+      continue;
+    }
+    if (/(?:unordered_map|map)\s*<[^>]+>\s+(\w+);/.test(line)) {
+      line = line.replace(/(?:unordered_map|map)\s*<[^>]+>\s+(\w+);/, "let $1 = new Map();");
+      result.push(line);
+      continue;
+    }
+
+    // C-style 1D / 2D arrays: int dp[n + 1]; or int dp[n + 1][m + 1];
+    if (/^\s*(?:int|bool|double|float|long)\s+(\w+)\s*\[(.+?)\]\s*\[(.+?)\];/.test(line)) {
+      line = line.replace(
+        /^\s*(?:int|bool|double|float|long)\s+(\w+)\s*\[(.+?)\]\s*\[(.+?)\];/,
+        "let $1 = Array.from({length: $2}, () => new Array($3).fill(0));",
+      );
+      result.push(line);
+      continue;
+    }
+    if (/^\s*(?:int|bool|double|float|long)\s+(\w+)\s*\[(.+?)\];/.test(line)) {
+      line = line.replace(
+        /^\s*(?:int|bool|double|float|long)\s+(\w+)\s*\[(.+?)\];/,
+        "let $1 = new Array($2).fill(0);",
+      );
       result.push(line);
       continue;
     }
