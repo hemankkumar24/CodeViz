@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { z } from "zod";
-import { Play, AlertCircle, Sparkles, Loader2, Clock, Zap } from "lucide-react";
+import { Play, AlertCircle, Sparkles, Loader2, Clock, Zap, RotateCcw } from "lucide-react";
 import { GlobalNav } from "@/components/layout/GlobalNav";
 import { CodeEditor } from "@/components/editor/CodeEditor";
 import { VisualizationControls } from "@/components/editor/VisualizationControls";
@@ -122,6 +122,18 @@ function VisualizePage() {
                 className="min-w-0 flex-1 bg-transparent text-[13.5px] font-medium text-foreground outline-none"
               />
               <div className="flex shrink-0 items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    store.clearEditor();
+                    navigate({ to: "/visualize", search: {} });
+                  }}
+                  title="Clear code & reset to blank editor"
+                  className="flex items-center gap-1.5 rounded-[8px] border border-hairline bg-surface-1 px-2.5 py-1 font-mono text-[11.5px] font-medium text-text-secondary transition-colors hover:border-primary/50 hover:bg-surface-2 hover:text-foreground"
+                >
+                  <RotateCcw size={11} className="text-text-tertiary" />
+                  <span>Clear</span>
+                </button>
                 <select
                   aria-label="Select programming language"
                   value={language}
@@ -137,10 +149,19 @@ function VisualizePage() {
                 <select
                   aria-label="Load example"
                   value=""
-                  onChange={(e) => navigate({ to: "/visualize", search: { example: e.target.value } })}
+                  onChange={(e) => {
+                    if (e.target.value === "__clear__") {
+                      store.clearEditor();
+                      navigate({ to: "/visualize", search: {} });
+                    } else if (e.target.value) {
+                      navigate({ to: "/visualize", search: { example: e.target.value } });
+                    }
+                  }}
                   className="rounded-[8px] border border-hairline bg-surface-1 px-2.5 py-1 font-mono text-[11.5px] text-text-secondary outline-none transition-colors hover:text-foreground focus:border-primary/50"
                 >
                   <option value="">Load example…</option>
+                  <option value="__clear__">✨ Blank / Custom Code</option>
+                  <option disabled>──────────</option>
                   {examples.map((ex) => (
                     <option key={ex.slug} value={ex.slug}>
                       {ex.title}

@@ -3,6 +3,7 @@ import { MatrixVisualizer } from "./MatrixVisualizer";
 import { DPVisualizer } from "./DPVisualizer";
 import { RecursionVisualizer } from "./RecursionVisualizer";
 import { VariableInspector } from "./VariableInspector";
+import { GraphTraversalVisualizer } from "./GraphTraversalVisualizer";
 import { EmptyState, GhostCells } from "@/components/ui/cv";
 import { useWorkspace } from "@/state/executionStore";
 import type { VisualizationType } from "@/types/execution";
@@ -33,19 +34,46 @@ export function VisualizationCanvas() {
     );
   }
 
+  const hasGraphOrQueue =
+    ("graph" in viz.structures && ("queue" in viz.structures || "seen" in viz.structures || "order" in viz.structures)) ||
+    ("queue" in viz.structures && "seen" in viz.structures);
+
   const snapshot = structure ? viz.structures[structure] : undefined;
   const resolved: VisualizationType =
     visualizationType !== "auto"
       ? visualizationType
-      : viz.callstack?.length
-        ? "recursion"
-        : asMatrix(snapshot)
-          ? "matrix"
-          : asArray(snapshot)
-            ? "array"
-            : "variables";
+      : hasGraphOrQueue
+        ? "multiple"
+        : viz.callstack?.length
+          ? "recursion"
+          : asMatrix(snapshot)
+            ? "matrix"
+            : asArray(snapshot)
+              ? "array"
+              : "variables";
 
   const prevVariables = events[Math.max(0, viz.step - 1)]?.variables;
+
+  // Render specialized Graph/BFS/DFS visualizer when graph & queue structures exist
+  if (visualizationType === "auto" && hasGraphOrQueue) {
+    return (
+      <div className="flex flex-col gap-6">
+        <GraphTraversalVisualizer
+          graph={asMatrix(viz.structures["graph"])}
+          queue={asArray(viz.structures["queue"])}
+          order={asArray(viz.structures["order"])}
+          seen={asArray(viz.structures["seen"])}
+          variables={viz.variables}
+          explanation={viz.explanation}
+        />
+        {viz.explanation && (
+          <p className="max-w-xl font-mono text-[13px] leading-relaxed text-text-secondary">
+            {viz.explanation}
+          </p>
+        )}
+      </div>
+    );
+  }
 
   const renderOne = (type: VisualizationType, name: string | null) => {
     const data = name ? viz.structures[name] : snapshot;
@@ -130,7 +158,7 @@ export function VisualizationCanvas() {
     <div className="flex flex-col gap-8">
       {renderOne(resolved, structure)}
       {viz.explanation ? (
-        <p className="max-w-xl text-[13.5px] leading-relaxed text-text-secondary">{viz.explanation}</p>
+        <p className="max-w-xl font-mono text-[13px] leading-relaxed text-text-secondary">{viz.explanation}</p>
       ) : null}
     </div>
   );

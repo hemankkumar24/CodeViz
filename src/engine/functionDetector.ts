@@ -35,9 +35,28 @@ export type DetectedFunction = {
 
 /* ---------------------- Type inference ----------------------------------- */
 
-function inferParamType(name: string): InferredType {
+function inferParamType(name: string, rawWithTypes = ""): InferredType {
   const lower = name.toLowerCase();
+  const rawLower = rawWithTypes.toLowerCase();
 
+  // Check C++/Java type hints in raw signature
+  if (rawLower.includes("vector<vector<") || rawLower.includes("[][]") || rawLower.includes("list<list<")) {
+    return "number[][]";
+  }
+  if (rawLower.includes("vector<") || rawLower.includes("[]") || rawLower.includes("list<") || rawLower.includes("set<")) {
+    return "number[]";
+  }
+  if (rawLower.includes("int") || rawLower.includes("double") || rawLower.includes("float") || rawLower.includes("long")) {
+    return "number";
+  }
+  if (rawLower.includes("string") || rawLower.includes("char")) {
+    return "string";
+  }
+  if (rawLower.includes("bool")) {
+    return "boolean";
+  }
+
+  // Name-based heuristics
   if (
     ["grid", "matrix", "board", "graph", "adjlist", "adj", "adjacency", "dp", "table", "memo"].includes(lower)
   ) {
@@ -57,7 +76,7 @@ function inferParamType(name: string): InferredType {
      "size", "count", "start", "end", "x", "y", "num", "amount", "goal",
      "max", "min", "threshold", "depth", "level", "index", "node",
      "maxsteps", "multiplier", "score", "steps", "diff", "mindiff", "maxdiff",
-     "len", "length", "pos", "offset", "radius", "speed", "total"].includes(lower)
+     "len", "length", "pos", "offset", "radius", "speed", "total", "mid", "low", "high", "left", "right"].includes(lower)
   ) {
     return "number";
   }
@@ -69,6 +88,18 @@ function inferParamType(name: string): InferredType {
   }
 
   return "unknown";
+}
+
+function extractParamName(raw: string): string {
+  // Strip default value: a = 5 -> a
+  let s = raw.replace(/[=:][\s\S]*/, "").trim();
+  // Strip C++/Java type prefix: vector<int>& nums -> nums, int target -> target
+  s = s.replace(/^[A-Za-z0-9_<>,:*\s&]+\s+([A-Za-z_]\w*)$/, "$1");
+  // Remove reference / pointer symbols: & *
+  s = s.replace(/[&*]/g, "").trim();
+  // If multiple words remain, take the last identifier
+  const words = s.split(/\s+/).filter(Boolean);
+  return words[words.length - 1] ?? s;
 }
 
 /* -------------------- Function detection --------------------------------- */
@@ -122,6 +153,10 @@ export function detectFunctions(jsCode: string): DetectedFunction[] {
     return detectFunctionsRegex(jsCode);
   }
 
+  if (functions.length === 0) {
+    return detectFunctionsRegex(jsCode);
+  }
+
   return functions;
 }
 
@@ -131,14 +166,14 @@ function extractParams(params: ESTree.Pattern[]): DetectedParam[] {
     if (param.type === "Identifier") {
       if (param.name !== "self" && param.name !== "this") {
         result.push({
-          name: param.name,
+          name: extractParamName(param.name),
           inferredType: inferParamType(param.name),
         });
       }
     } else if (param.type === "AssignmentPattern" && param.left.type === "Identifier") {
       if (param.left.name !== "self" && param.left.name !== "this") {
         result.push({
-          name: param.left.name,
+          name: extractParamName(param.left.name),
           inferredType: inferParamType(param.left.name),
           defaultValue: param.right.type === "Literal" ? (param.right as ESTree.Literal).value : undefined,
         });
@@ -150,20 +185,33 @@ function extractParams(params: ESTree.Pattern[]): DetectedParam[] {
 
 function detectFunctionsRegex(code: string): DetectedFunction[] {
   const functions: DetectedFunction[] = [];
-  const fnRegex = /(?:function\s+(\w+)|(\w+)\s*\(([^)]*)\)\s*\{)/g;
+  // Matches JS, Python, C++, Java function definitions
+  const fnRegex = /(?:(?:(?:public|private|protected|static|virtual|inline|const|auto|void|int|double|float|bool|string|vector<[^>]+>|pair<[^>]+>|List<[^>]+>|Set<[^>]+>|int\[\](?:\[\])*)\s+)*(?:def\s+|function\s+)?(\w+)\s*\(([^)]*)\)\s*(?:->\s*[^:{]+)?\s*\{?)/g;
+
   let match;
   while ((match = fnRegex.exec(code)) !== null) {
-    const name = match[1] ?? match[2];
-    if (name && name !== "if" && name !== "while" && name !== "for" && name !== "switch" && name !== "catch") {
-      const rawParams = match[3] ?? "";
-      const params = rawParams.split(",").map((p) => p.trim()).filter((p) => p && p !== "self" && p !== "this").map((p) => ({
-        name: p.replace(/[=:][\s\S]*/, "").trim(),
-        inferredType: inferParamType(p),
-      }));
+    const name = match[1];
+    if (
+      name &&
+      !["if", "while", "for", "switch", "catch", "return", "class", "else"].includes(name)
+    ) {
+      const rawParams = match[2] ?? "";
+      const params = rawParams
+        .split(",")
+        .map((p) => p.trim())
+        .filter((p) => p && p !== "self" && p !== "this")
+        .map((p) => {
+          const cleanName = extractParamName(p);
+          return {
+            name: cleanName,
+            inferredType: inferParamType(cleanName, p),
+          };
+        });
+
       functions.push({
         name,
         params,
-        isClassMethod: false,
+        isClassMethod: code.includes(`class `) && code.indexOf(name) > code.indexOf(`class `),
       });
     }
   }
@@ -189,7 +237,13 @@ export function analyzeCode(code: string, language: SupportedLanguage): {
   entryFunction: DetectedFunction | null;
 } {
   const jsCode = transpileToJS(code, language);
-  const functions = detectFunctions(jsCode);
+  let functions = detectFunctions(jsCode);
+
+  // If no functions detected via transpiled JS, try raw code
+  if (functions.length === 0) {
+    functions = detectFunctionsRegex(code);
+  }
+
   const entryFunction = selectEntryFunction(functions);
   return { functions, entryFunction };
 }

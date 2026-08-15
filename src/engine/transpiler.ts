@@ -7,8 +7,72 @@ import type { SupportedLanguage } from "@/types/languages";
 
 /* ============================== Public API =============================== */
 
+export function detectCodeLanguage(code: string): SupportedLanguage | null {
+  const trimmed = code.trim();
+  if (!trimmed) return null;
+
+  // Python indicators (prioritize over C++ to avoid false positives on `-> Type:` annotations)
+  if (
+    trimmed.includes("def ") ||
+    trimmed.includes("elif ") ||
+    trimmed.includes("self.") ||
+    trimmed.includes("class Solution:") ||
+    trimmed.includes("in range(") ||
+    trimmed.includes("import sys")
+  ) {
+    return "python";
+  }
+
+  // C++ indicators
+  if (
+    trimmed.includes("#include") ||
+    trimmed.includes("using namespace") ||
+    trimmed.includes("vector<") ||
+    trimmed.includes("pair<") ||
+    trimmed.includes("std::") ||
+    trimmed.includes("unordered_set<") ||
+    trimmed.includes("unordered_map<") ||
+    trimmed.includes("cout <<") ||
+    /class\s+\w+\s*\{\s*public\s*:/.test(trimmed)
+  ) {
+    return "cpp";
+  }
+
+  // Java indicators
+  if (
+    trimmed.includes("public class") ||
+    trimmed.includes("System.out.print") ||
+    trimmed.includes("ArrayList<") ||
+    trimmed.includes("HashSet<") ||
+    trimmed.includes("Arrays.fill") ||
+    /public\s+(?:static\s+)?(?:int|void|boolean|String|double)/.test(trimmed)
+  ) {
+    return "java";
+  }
+
+  // TypeScript indicators
+  if (
+    trimmed.includes(": number[]") ||
+    trimmed.includes(": number") ||
+    trimmed.includes(": string") ||
+    trimmed.includes(": boolean") ||
+    trimmed.includes(": void") ||
+    trimmed.includes("interface ") ||
+    trimmed.includes("type ")
+  ) {
+    return "typescript";
+  }
+
+  return null;
+}
+
 export function transpileToJS(code: string, language: SupportedLanguage): string {
-  switch (language) {
+  // If the code clearly belongs to a different language than the selected one,
+  // auto-detect and transpile properly to avoid syntax errors.
+  const autoDetected = detectCodeLanguage(code);
+  const effectiveLang = autoDetected && autoDetected !== language ? autoDetected : language;
+
+  switch (effectiveLang) {
     case "python":
       return transpilePython(code);
     case "cpp":
@@ -345,6 +409,7 @@ function cleanParamTypes(params: string): string {
 function transpileCpp(code: string): string {
   const lines = code.split("\n");
   const result: string[] = [];
+  let inClass = false;
 
   for (let i = 0; i < lines.length; i++) {
     let line = lines[i]!;
@@ -360,11 +425,20 @@ function transpileCpp(code: string): string {
     }
 
     if (/^\s*class\s+\w+\s*\{/.test(line)) {
+      inClass = true;
       result.push(line.replace(/class\s+(\w+)/, "class $1"));
       continue;
     }
     if (trimmed === "};") {
+      inClass = false;
       result.push("}");
+      continue;
+    }
+
+    // Return with curly initializer list: return {mid, steps}; or return {-1, steps};
+    if (/return\s*\{([^}]+)\};/.test(line)) {
+      line = line.replace(/return\s*\{([^}]+)\};/, "return [$1];");
+      result.push(line);
       continue;
     }
 
@@ -390,11 +464,11 @@ function transpileCpp(code: string): string {
     }
 
     // Initializer list vector / set: vector<int> queue = {start}; or unordered_set<int> seen = {start};
-    if (/(?:vector<[^>]+>|unordered_set<[^>]+>|unordered_map<[^>]+>)\s+(\w+)\s*=\s*\{([^}]+)\};/.test(line)) {
+    if (/(?:vector<[^>]+>|unordered_set<[^>]+>|unordered_map<[^>]+>|pair<[^>]+>)\s+(\w+)\s*=\s*\{([^}]+)\};/.test(line)) {
       if (line.includes("unordered_set")) {
         line = line.replace(/unordered_set<[^>]+>\s+(\w+)\s*=\s*\{([^}]+)\};/, "let $1 = new Set([$2]);");
       } else {
-        line = line.replace(/vector<[^>]+>\s+(\w+)\s*=\s*\{([^}]+)\};/, "let $1 = [$2];");
+        line = line.replace(/(?:vector<[^>]+>|pair<[^>]+>)\s+(\w+)\s*=\s*\{([^}]+)\};/, "let $1 = [$2];");
       }
       result.push(line);
       continue;
@@ -412,14 +486,17 @@ function transpileCpp(code: string): string {
       continue;
     }
 
-    // Method header: vector<int> insertionSort(vector<int>& nums) {
-    // Only matches if it has a trailing { or does not end with ;
-    if (/^\s*(?:vector<[^>]+>|int|void|bool|string|double|float|long|auto|unordered_set<[^>]+>)\s+(\w+)\s*\((.*?)\)\s*\{/.test(line)) {
-      const match = /^\s*(?:vector<[^>]+>|int|void|bool|string|double|float|long|auto|unordered_set<[^>]+>)\s+(\w+)\s*\((.*?)\)\s*\{/.exec(line)!;
+    // Function or Method header: vector<int> insertionSort(...) { or pair<int, int> searchWithLimits(...) {
+    if (/^\s*(?:vector<[^>]+>|pair<[^>]+>|int|void|bool|string|double|float|long|auto|unordered_set<[^>]+>)\s+(\w+)\s*\((.*?)\)\s*\{/.test(line)) {
+      const match = /^\s*(?:vector<[^>]+>|pair<[^>]+>|int|void|bool|string|double|float|long|auto|unordered_set<[^>]+>)\s+(\w+)\s*\((.*?)\)\s*\{/.exec(line)!;
       const fnName = match[1]!;
       const params = match[2]!;
       const cleanedParams = cleanCppParams(params);
-      result.push(`    ${fnName}(${cleanedParams}) {`);
+      if (inClass) {
+        result.push(`    ${fnName}(${cleanedParams}) {`);
+      } else {
+        result.push(`function ${fnName}(${cleanedParams}) {`);
+      }
       continue;
     }
 
@@ -433,19 +510,19 @@ function transpileCpp(code: string): string {
 
     // Variable declarations: int currentSum = nums[0], maxSum = nums[0];
     line = line.replace(
-      /^\s*(?:int|double|float|long|bool|char|string|auto)\s+([^;]+);/,
+      /^\s*(?:int|double|float|long|bool|char|string|auto|pair<[^>]+>)\s+([^;]+);/,
       "let $1;",
     );
 
     // For loops: for (int i = 1; i < nums.size(); i++)
     line = line.replace(/for\s*\(\s*int\s+/g, "for (let ");
 
+    // Integer mid calculation: (left + right) / 2 -> Math.floor((left + right) / 2)
+    line = line.replace(/=\s*\((\w+\s*[+\-]\s*\w+)\)\s*\/\s*2;/g, "= Math.floor(($1) / 2);");
+    line = line.replace(/=\s*(\w+)\s*\+\s*\((\w+\s*-\s*\w+)\)\s*\/\s*2;/g, "= $1 + Math.floor(($2) / 2);");
+
     // Return vector conversion: return vector<int>(seen.begin(), seen.end());
     line = line.replace(/return\s+vector<[^>]+>\((\w+)\.begin\(\),\s*\1\.end\(\)\);/g, "return Array.from($1);");
-
-    // *max_element(dp.begin(), dp.end()) -> Math.max(...dp)
-    line = line.replace(/\*max_element\((\w+)\.begin\(\),\s*\1\.end\(\)\)/g, "Math.max(...$1)");
-    line = line.replace(/\*min_element\((\w+)\.begin\(\),\s*\1\.end\(\)\)/g, "Math.min(...$1)");
 
     // Common C++ methods
     line = line.replace(/\.size\(\)/g, ".length");
@@ -456,7 +533,11 @@ function transpileCpp(code: string): string {
     line = line.replace(/(\w+)\.find\((.+?)\)\s*==\s*\1\.end\(\)/g, "!$1.has($2)");
     line = line.replace(/(\w+)\.find\((.+?)\)\s*!=\s*\1\.end\(\)/g, "$1.has($2)");
 
-    // max / min / abs (prevent Math.Math.max)
+    // *max_element(dp.begin(), dp.end()) -> Math.max(...dp)
+    line = line.replace(/\*max_element\((\w+)\.begin\(\),\s*\1\.end\(\)\)/g, "Math.max(...$1)");
+    line = line.replace(/\*min_element\((\w+)\.begin\(\),\s*\1\.end\(\)\)/g, "Math.min(...$1)");
+
+    // max / min / abs
     line = line.replace(/(?<!Math\.)\bmax\(/g, "Math.max(");
     line = line.replace(/(?<!Math\.)\bmin\(/g, "Math.min(");
     line = line.replace(/(?<!Math\.)\babs\(/g, "Math.abs(");
@@ -551,6 +632,10 @@ function transpileJava(code: string): string {
 
     // For loop: for (int i = 1; i < nums.length; i++)
     line = line.replace(/for\s*\(\s*int\s+/g, "for (let ");
+
+    // Integer mid calculation: (left + right) / 2 -> Math.floor((left + right) / 2)
+    line = line.replace(/=\s*\((\w+\s*[+\-]\s*\w+)\)\s*\/\s*2;/g, "= Math.floor(($1) / 2);");
+    line = line.replace(/=\s*(\w+)\s*\+\s*\((\w+\s*-\s*\w+)\)\s*\/\s*2;/g, "= $1 + Math.floor(($2) / 2);");
 
     // Return new ArrayList<>(seen): return new ArrayList<>(seen);
     line = line.replace(/return\s+new\s+ArrayList<[^>]*>\((\w+)\);/g, "return Array.from($1);");

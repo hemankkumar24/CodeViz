@@ -46,11 +46,17 @@ export function ArrayVisualizer({
 
   if (!values.length) {
     return (
-      <EmptyState
-        title="No array data yet"
-        description="Provide input and run Visualize to watch this array transform."
-        visual={<GhostCells />}
-      />
+      <div className="w-full">
+        {label ? (
+          <div className="mb-2 flex items-center gap-2">
+            <span className="font-mono text-[12px] text-text-secondary">{label}</span>
+            <Pill>0 elements</Pill>
+          </div>
+        ) : null}
+        <div className="flex h-12 w-full items-center justify-center rounded-[10px] border border-dashed border-hairline/80 bg-surface-1/40 font-mono text-[12px] text-text-tertiary">
+          [ empty array ]
+        </div>
+      </div>
     );
   }
 

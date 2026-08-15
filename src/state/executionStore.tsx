@@ -313,6 +313,7 @@ type Action =
   | { type: "stepBack" }
   | { type: "restart" }
   | { type: "setSpeed"; speed: PlaybackSpeed }
+  | { type: "clearEditor" }
   | { type: "reset" };
 
 function reducer(state: State, action: Action): State {
@@ -450,6 +451,23 @@ function reducer(state: State, action: Action): State {
       return { ...state, currentStep: 0, isPlaying: false };
     case "setSpeed":
       return { ...state, speed: action.speed };
+    case "clearEditor":
+      return {
+        ...initialState,
+        title: "Untitled",
+        exampleSlug: null,
+        language: state.language,
+        code: "",
+        inputText: "",
+        paramValues: {},
+        events: [],
+        hasRun: false,
+        isPlaying: false,
+        currentStep: 0,
+        error: null,
+        detectedFunction: null,
+        detectedParams: [],
+      };
     case "reset":
       return initialState;
     default:
@@ -620,6 +638,7 @@ function useWorkspaceInternal() {
     dispatch,
     run,
     loadExampleBySlug,
+    clearEditor: useCallback(() => dispatch({ type: "clearEditor" }), []),
     jumpChange,
   };
 }
