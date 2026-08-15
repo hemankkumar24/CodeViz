@@ -7,31 +7,44 @@ import { fibonacciDPTrace } from "./fibonacciDP";
 import { knapsackTrace } from "./knapsack";
 import { lisTrace } from "./lis";
 import { fibRecursionTrace } from "./fibRecursion";
+import { bfsTrace } from "./bfs";
+import { dfsTrace } from "./dfs";
 
 /**
- * Stand-in for the future execution engine. Same signature shape a real
- * backend would expose: give it a slug + input, get ExecutionEvent[] back.
+ * Execution engine mapping each algorithm slug and inputs to step-by-step ExecutionEvent[].
  */
-const traceFactories: Record<string, (values?: number[]) => ExecutionEvent[]> = {
-  "insertion-sort": (values) => insertionSortTrace(values ?? [5, 2, 4, 1]),
-  "binary-search": (values) => binarySearchTrace(values, 11),
-  "sliding-window": (values) => slidingWindowTrace(values, 3),
-  kadane: (values) => kadaneTrace(values),
+const traceFactories: Record<string, (values?: unknown) => ExecutionEvent[]> = {
+  "insertion-sort": (values) => insertionSortTrace(Array.isArray(values) ? (values as number[]) : [5, 2, 4, 1]),
+  "binary-search": (values) => binarySearchTrace(Array.isArray(values) ? (values as number[]) : undefined, 11),
+  "sliding-window": (values) => slidingWindowTrace(Array.isArray(values) ? (values as number[]) : undefined, 3),
+  kadane: (values) => kadaneTrace(Array.isArray(values) ? (values as number[]) : undefined),
   "fibonacci-dp": () => fibonacciDPTrace(9),
-  knapsack: (values) => knapsackTrace(values ?? [1, 3, 4, 5], [1, 4, 5, 7], 5),
-  lis: (values) => lisTrace(values),
+  knapsack: (values) => knapsackTrace(Array.isArray(values) ? (values as number[]) : [1, 3, 4, 5], [1, 4, 5, 7], 5),
+  lis: (values) => lisTrace(Array.isArray(values) ? (values as number[]) : undefined),
   "fib-recursion": () => fibRecursionTrace(5),
+  bfs: () => bfsTrace([[1, 2], [0, 3, 4], [0], [1], [1]], 0),
+  dfs: () => dfsTrace([[1, 2], [0, 3, 4], [0], [1], [1]], 0),
 };
 
 export function hasTrace(slug: string) {
   return slug in traceFactories;
 }
 
-export function runMockExecution(slug: string, values?: number[]): ExecutionEvent[] {
+export function runMockExecution(slug: string, values?: unknown): ExecutionEvent[] {
   const factory = traceFactories[slug];
   if (!factory) return [];
-  const usable = values && values.length > 0 ? values : undefined;
-  return factory(usable);
+  return factory(values);
 }
 
-export { insertionSortTrace };
+export {
+  insertionSortTrace,
+  binarySearchTrace,
+  slidingWindowTrace,
+  kadaneTrace,
+  fibonacciDPTrace,
+  knapsackTrace,
+  lisTrace,
+  fibRecursionTrace,
+  bfsTrace,
+  dfsTrace,
+};

@@ -3,13 +3,14 @@ import { runMockExecution } from "@/data/mockExecutions";
 import { selectVisualizationState } from "@/state/selectors";
 import { ArrayVisualizer } from "@/components/visualization/ArrayVisualizer";
 import { CodeEditor } from "@/components/editor/CodeEditor";
-import { getExample } from "@/data/examples";
+import { getExample, getExampleCode } from "@/data/examples";
 import { Pill } from "@/components/ui/cv";
 
 /** Autoplaying hero demo: the real trace, the real renderers, no interaction needed. */
 export function LandingDemo() {
   const events = useMemo(() => runMockExecution("insertion-sort"), []);
-  const code = getExample("insertion-sort")?.code ?? "";
+  const ex = getExample("insertion-sort");
+  const code = ex ? getExampleCode(ex, "python") : "";
   const [step, setStep] = useState(0);
 
   useEffect(() => {
@@ -27,7 +28,7 @@ export function LandingDemo() {
   return (
     <div className="glass animate-panel-in overflow-hidden rounded-[18px]">
       <div className="flex items-center justify-between gap-3 border-b border-hairline px-4 py-2.5">
-        <span className="font-mono text-[11.5px] text-text-secondary">insertion-sort.js</span>
+        <span className="font-mono text-[11.5px] text-text-secondary">insertion_sort.py</span>
         <Pill tone="accent">step {step + 1}/{events.length}</Pill>
       </div>
 
@@ -35,6 +36,7 @@ export function LandingDemo() {
         <CodeEditor
           value={code}
           onChange={() => {}}
+          language="python"
           readOnly
           activeLine={viz?.line}
           minHeight={280}

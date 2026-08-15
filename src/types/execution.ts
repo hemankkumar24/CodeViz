@@ -61,7 +61,7 @@ export type ExecutionEvent = {
 export type InputData =
   | { kind: "array"; values: number[] }
   | { kind: "matrix"; values: number[][] }
-  | { kind: "variables"; values: Record<string, number> };
+  | { kind: "variables"; values: Record<string, unknown> };
 
 export type UserConfig = {
   code: string;

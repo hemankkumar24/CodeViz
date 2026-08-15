@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { z } from "zod";
-import { Play, AlertCircle, Sparkles } from "lucide-react";
+import { Play, AlertCircle, Sparkles, Loader2, Clock, Zap } from "lucide-react";
 import { GlobalNav } from "@/components/layout/GlobalNav";
 import { CodeEditor } from "@/components/editor/CodeEditor";
 import { VisualizationControls } from "@/components/editor/VisualizationControls";
@@ -14,6 +14,7 @@ import { StepExplanation } from "@/components/execution/StepExplanation";
 import { CvButton, Pill } from "@/components/ui/cv";
 import { WorkspaceProvider, useWorkspace } from "@/state/executionStore";
 import { examples } from "@/data/examples";
+import { SUPPORTED_LANGUAGES, type SupportedLanguage } from "@/types/languages";
 
 const searchSchema = z.object({ example: z.string().optional() });
 
@@ -42,7 +43,17 @@ export const Route = createFileRoute("/visualize")({
 });
 
 function StatusHint() {
-  const { status, error } = useWorkspace();
+  const { status, error, isExecuting, detectedFunction } = useWorkspace();
+
+  if (isExecuting) {
+    return (
+      <p className="flex items-center gap-2 text-[12.5px] text-primary">
+        <Loader2 size={13} className="animate-spin" />
+        <span>Executing code…</span>
+      </p>
+    );
+  }
+
   if (status === "error" && error) {
     return (
       <p className="flex items-start gap-2 text-[12.5px] text-[var(--viz-delete)]">
@@ -53,22 +64,43 @@ function StatusHint() {
       </p>
     );
   }
+
   const copy: Partial<Record<typeof status, string>> = {
     empty: "Write code or load an example to begin.",
     missingInput: "Add input data to run this algorithm.",
     invalidInput: "Fix the input format before running.",
     noTargetSelected: "Pick which structure to visualize.",
-    ready: "Ready — press Visualize.",
+    ready: detectedFunction
+      ? `Detected: ${detectedFunction.name}() — press Visualize.`
+      : "Ready — press Visualize.",
   };
   const text = copy[status];
   return text ? <p className="text-[12.5px] text-text-tertiary">{text}</p> : null;
+}
+
+function ExecutionStats() {
+  const { events, executionTimeMs } = useWorkspace();
+  if (!events.length || executionTimeMs === null) return null;
+
+  return (
+    <div className="flex items-center gap-2">
+      <Pill tone="accent">
+        <Zap size={10} className="mr-1" />
+        {events.length} steps
+      </Pill>
+      <Pill>
+        <Clock size={10} className="mr-1" />
+        {executionTimeMs < 1 ? "<1" : executionTimeMs}ms
+      </Pill>
+    </div>
+  );
 }
 
 function VisualizePage() {
   const { example } = Route.useSearch();
   const navigate = useNavigate();
   const store = useWorkspace();
-  const { code, dispatch, loadExampleBySlug, run, canRun, viz, events, title } = store;
+  const { code, language, dispatch, loadExampleBySlug, run, canRun, viz, events, title, isExecuting, consoleLogs } = store;
 
   useEffect(() => {
     if (example) loadExampleBySlug(example);
@@ -91,10 +123,22 @@ function VisualizePage() {
               />
               <div className="flex shrink-0 items-center gap-2">
                 <select
+                  aria-label="Select programming language"
+                  value={language}
+                  onChange={(e) => dispatch({ type: "setLanguage", language: e.target.value as SupportedLanguage })}
+                  className="rounded-[8px] border border-hairline bg-surface-1 px-2.5 py-1 font-mono text-[11.5px] font-medium text-text-secondary outline-none transition-colors hover:text-foreground focus:border-primary/50"
+                >
+                  {SUPPORTED_LANGUAGES.map((lang) => (
+                    <option key={lang.id} value={lang.id}>
+                      {lang.label}
+                    </option>
+                  ))}
+                </select>
+                <select
                   aria-label="Load example"
                   value=""
                   onChange={(e) => navigate({ to: "/visualize", search: { example: e.target.value } })}
-                  className="rounded-[8px] border border-hairline bg-surface-1 px-2 py-1 font-mono text-[11.5px] text-text-secondary outline-none"
+                  className="rounded-[8px] border border-hairline bg-surface-1 px-2.5 py-1 font-mono text-[11.5px] text-text-secondary outline-none transition-colors hover:text-foreground focus:border-primary/50"
                 >
                   <option value="">Load example…</option>
                   {examples.map((ex) => (
@@ -105,14 +149,27 @@ function VisualizePage() {
                 </select>
               </div>
             </header>
-            <CodeEditor
-              value={code}
-              onChange={(next) => dispatch({ type: "setCode", code: next })}
-              activeLine={events.length ? viz?.line : undefined}
-              errorLine={store.error?.line}
-              minHeight={320}
-              className="max-h-[46vh]"
-            />
+
+            <div className="relative">
+              <CodeEditor
+                value={code}
+                onChange={(next) => dispatch({ type: "setCode", code: next })}
+                language={language}
+                activeLine={events.length ? viz?.line : undefined}
+                errorLine={store.error?.line}
+                readOnly={isExecuting}
+                minHeight={320}
+                className="max-h-[46vh]"
+              />
+              {isExecuting && (
+                <div className="absolute inset-0 z-20 flex items-center justify-center bg-surface-1/60 backdrop-blur-[2px]">
+                  <div className="flex flex-col items-center gap-2">
+                    <Loader2 size={24} className="animate-spin text-primary" />
+                    <span className="text-[12px] font-medium text-text-secondary">Executing…</span>
+                  </div>
+                </div>
+              )}
+            </div>
           </section>
 
           <section className="animate-panel-in glass rounded-[16px] p-4">
@@ -125,8 +182,12 @@ function VisualizePage() {
 
           <div className="flex items-center gap-3 pb-2">
             <CvButton onClick={run} disabled={!canRun}>
-              <Play size={14} strokeWidth={2} />
-              Visualize
+              {isExecuting ? (
+                <Loader2 size={14} strokeWidth={2} className="animate-spin" />
+              ) : (
+                <Play size={14} strokeWidth={2} />
+              )}
+              {isExecuting ? "Executing…" : "Visualize"}
             </CvButton>
             <StatusHint />
           </div>
@@ -139,7 +200,10 @@ function VisualizePage() {
               <Sparkles size={13} className="text-primary" />
               <span className="font-mono text-[11.5px] text-text-secondary">Canvas</span>
             </div>
-            {events.length ? <Pill tone="accent">line {viz?.line}</Pill> : <Pill>idle</Pill>}
+            <div className="flex items-center gap-2">
+              <ExecutionStats />
+              {events.length ? <Pill tone="accent">line {viz?.line}</Pill> : <Pill>idle</Pill>}
+            </div>
           </header>
 
           <div className="flex-1 overflow-auto px-5 py-8">
@@ -161,6 +225,20 @@ function VisualizePage() {
           <section className="animate-panel-in glass rounded-[16px] p-4">
             <StepExplanation />
           </section>
+          {consoleLogs.length > 0 && (
+            <section className="animate-panel-in glass rounded-[16px] p-4">
+              <p className="mb-2 font-mono text-[10.5px] uppercase tracking-[0.14em] text-text-tertiary">
+                Console Output
+              </p>
+              <div className="max-h-[200px] overflow-auto rounded-[8px] bg-surface-1 p-3">
+                {consoleLogs.map((log, i) => (
+                  <p key={i} className="font-mono text-[12px] text-text-secondary">
+                    {log.map((v) => (typeof v === "object" ? JSON.stringify(v) : String(v))).join(" ")}
+                  </p>
+                ))}
+              </div>
+            </section>
+          )}
         </aside>
       </div>
 

@@ -1,9 +1,11 @@
 import { useEffect, useRef } from 'react'
 import { cn } from '@/lib/utils'
 import { tokenClass, tokenizeLine } from '@/lib/highlight'
+import type { SupportedLanguage } from '@/types/languages'
 
 export function CodeView({
   code,
+  language = 'python',
   currentLine,
   errorLine,
   className,
@@ -12,6 +14,7 @@ export function CodeView({
   showGutter = true,
 }: {
   code: string
+  language?: SupportedLanguage
   currentLine?: number
   errorLine?: number
   className?: string
@@ -75,7 +78,7 @@ export function CodeView({
                   {line.length === 0 ? (
                     <span> </span>
                   ) : (
-                    tokenizeLine(line).map((t, ti) => (
+                    tokenizeLine(line, language).map((t, ti) => (
                       <span key={ti} className={tokenClass[t.kind]}>
                         {t.value}
                       </span>
