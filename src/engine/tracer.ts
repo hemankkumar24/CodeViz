@@ -189,17 +189,48 @@ export class Tracer {
       }
     }
 
-    // Build highlighted cells from pointers targeting known structures
+    // Build highlighted cells from pointers and changes targeting known structures
     const highlighted: { structure: string; path: number[] }[] = [];
-    for (const [pName, pPath] of Object.entries(pointers)) {
-      // Find the array this pointer most likely indexes into
-      for (const sName of Object.keys(structures)) {
-        if (is1DArray(structures[sName]) || is2DMatrix(structures[sName])) {
-          highlighted.push({ structure: sName, path: pPath });
-          break;
+
+    // 1. Changes to structures are automatically highlighted
+    for (const c of changes) {
+      highlighted.push({ structure: c.structure, path: c.path });
+    }
+
+    // 2. Active 2D matrix / DP table cell highlighting (e.g. [i, j], [i, w], [r, c])
+    for (const [sName, sVal] of Object.entries(structures)) {
+      if (is2DMatrix(sVal) && sVal.length > 0) {
+        const rows = sVal.length;
+        const cols = sVal[0]?.length ?? 0;
+
+        const rowCandidates = ["i", "r", "row", "y", "u", "node"];
+        const colCandidates = ["j", "w", "c", "col", "x", "v", "k"];
+
+        let foundPair = false;
+        for (const rKey of rowCandidates) {
+          if (foundPair) break;
+          const rVal = variables[rKey];
+          if (typeof rVal === "number" && rVal >= 0 && rVal < rows) {
+            for (const cKey of colCandidates) {
+              const cVal = variables[cKey];
+              if (typeof cVal === "number" && cVal >= 0 && cVal < cols) {
+                highlighted.push({ structure: sName, path: [rVal, cVal] });
+                foundPair = true;
+                break;
+              }
+            }
+          }
+        }
+      } else if (is1DArray(sVal)) {
+        // 1D array index highlighting
+        for (const [pName, pPath] of Object.entries(pointers)) {
+          const idx = pPath[0];
+          if (typeof idx === "number" && idx >= 0 && idx < sVal.length) {
+            highlighted.push({ structure: sName, path: [idx] });
+          }
+          void pName;
         }
       }
-      void pName; // used for the loop
     }
 
     const event: ExecutionEvent = {

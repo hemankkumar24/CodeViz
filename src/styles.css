@@ -371,13 +371,45 @@
 }
 
 .cv-active-line {
-  background: color-mix(in oklab, var(--primary) 12%, transparent);
+  background: color-mix(in oklab, var(--primary) 14%, transparent);
   box-shadow: inset 2px 0 0 0 var(--primary);
 }
 
 .cv-error-line {
-  background: color-mix(in oklab, var(--viz-delete) 14%, transparent);
+  background: color-mix(in oklab, var(--viz-delete) 16%, transparent);
   box-shadow: inset 2px 0 0 0 var(--viz-delete);
+}
+
+/* Code editor syntax tokens */
+.cv-token-keyword {
+  color: #c084fc; /* Vibrant purple / violet */
+  font-weight: 600;
+}
+
+.cv-token-type {
+  color: #38bdf8; /* Vibrant sky cyan */
+  font-weight: 500;
+}
+
+.cv-token-string {
+  color: #4ade80; /* Emerald green */
+}
+
+.cv-token-number {
+  color: #fb923c; /* Amber / warm orange */
+}
+
+.cv-token-comment {
+  color: #94a3b8; /* Muted slate italic */
+  font-style: italic;
+}
+
+.cv-token-punct {
+  color: #94a3b8; /* Subtle zinc */
+}
+
+.cv-token-id {
+  color: #f1f5f9; /* Bright clean white */
 }
 
 @media (prefers-reduced-motion: reduce) {
