@@ -38,13 +38,18 @@ export function VisualizationCanvas() {
     ("graph" in viz.structures && ("queue" in viz.structures || "seen" in viz.structures || "order" in viz.structures)) ||
     ("queue" in viz.structures && "seen" in viz.structures);
 
+  const isRecursionTrace =
+    (viz.callstack?.length ?? 0) > 1 ||
+    events.some((e) => (e.callstack?.length ?? 0) > 1);
+
   const snapshot = structure ? viz.structures[structure] : undefined;
+
   const resolved: VisualizationType =
     visualizationType !== "auto"
       ? visualizationType
       : hasGraphOrQueue
         ? "multiple"
-        : viz.callstack?.length
+        : isRecursionTrace
           ? "recursion"
           : asMatrix(snapshot)
             ? "matrix"

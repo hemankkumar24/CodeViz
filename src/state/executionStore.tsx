@@ -121,21 +121,12 @@ export function getDefaultParamValue(name: string, type: InferredType, codeDefau
   if (codeDefault !== undefined) {
     return typeof codeDefault === "object" ? JSON.stringify(codeDefault) : String(codeDefault);
   }
-  const lower = name.toLowerCase();
-  if (lower === "target") return "11";
-  if (lower === "k") return "3";
-  if (lower === "capacity") return "5";
-  if (lower === "start" || lower === "node") return "0";
-  if (lower === "n") return "8";
-  if (lower === "seen" || lower === "visited") return "new Set()";
-  if (lower === "weights") return "[1, 3, 4, 5]";
-  if (lower === "values") return "[1, 4, 5, 7]";
-  if (type === "number[]") return "[5, 2, 4, 1]";
-  if (type === "number[][]") return "[[1, 2], [0, 3, 4], [0], [1], [1]]";
-  if (type === "number") return "10";
-  if (type === "string") return '"abc"';
+  if (type === "number[]") return "e.g. [1, 2, 3]";
+  if (type === "number[][]") return "e.g. [[1, 2], [3, 4]]";
+  if (type === "number") return "e.g. 5";
+  if (type === "string") return 'e.g. "text"';
   if (type === "boolean") return "true";
-  return "0";
+  return "e.g. 0";
 }
 
 export function parseInput(raw: string, kind: InputData["kind"]): ParsedInput {
@@ -344,9 +335,9 @@ function reducer(state: State, action: Action): State {
     case "setInputMode":
       return { ...state, inputMode: action.mode };
     case "setInputKind":
-      return { ...state, inputKind: action.kind, events: [], hasRun: false, isPlaying: false };
+      return { ...state, inputKind: action.kind, events: [], hasRun: false, isPlaying: false, error: null };
     case "setInputText":
-      return { ...state, inputText: action.text, events: [], hasRun: false, isPlaying: false, currentStep: 0 };
+      return { ...state, inputText: action.text, events: [], hasRun: false, isPlaying: false, currentStep: 0, error: null };
     case "setParamValue":
       return {
         ...state,
@@ -355,9 +346,10 @@ function reducer(state: State, action: Action): State {
         hasRun: false,
         isPlaying: false,
         currentStep: 0,
+        error: null,
       };
     case "setParamValues":
-      return { ...state, paramValues: action.values };
+      return { ...state, paramValues: action.values, error: null };
     case "setVisualizationType":
       return { ...state, visualizationType: action.value };
     case "setSelectedVariable":
@@ -423,11 +415,20 @@ function reducer(state: State, action: Action): State {
         consoleLogs: action.logs ?? [],
       };
     case "setDetectedFunction": {
-      // Auto-fill any missing parameter values with sensible defaults
       const updatedParams = { ...state.paramValues };
       for (const param of action.params) {
         if (!(param.name in updatedParams) || updatedParams[param.name] === undefined) {
-          updatedParams[param.name] = getDefaultParamValue(param.name, param.inferredType, param.defaultValue);
+          if (param.defaultValue !== undefined) {
+            updatedParams[param.name] =
+              typeof param.defaultValue === "object"
+                ? JSON.stringify(param.defaultValue)
+                : String(param.defaultValue);
+          } else if (state.exampleSlug !== null) {
+            updatedParams[param.name] = getDefaultParamValue(param.name, param.inferredType);
+          } else {
+            // For custom user code: leave empty so user types their own input
+            updatedParams[param.name] = "";
+          }
         }
       }
       return { ...state, detectedFunction: action.fn, detectedParams: action.params, paramValues: updatedParams };
@@ -528,7 +529,7 @@ function useWorkspaceInternal() {
     return "paused";
   }, [state, parsed.ok, hasParamErrors]);
 
-  const canRun = (status === "ready" || state.hasRun) && !state.isExecuting;
+  const canRun = !state.isExecuting && state.code.trim().length > 0 && !hasParamErrors;
 
   const run = useCallback(async () => {
     if (state.isExecuting) return;
