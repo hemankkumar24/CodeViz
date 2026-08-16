@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { z } from "zod";
-import { Play, AlertCircle, Sparkles, Loader2, Clock, Zap, RotateCcw } from "lucide-react";
+import { Play, AlertCircle, Sparkles, Loader2, Clock, Zap, RotateCcw, Code2, History } from "lucide-react";
 import { GlobalNav } from "@/components/layout/GlobalNav";
 import { CodeEditor } from "@/components/editor/CodeEditor";
 import { VisualizationControls } from "@/components/editor/VisualizationControls";
@@ -14,6 +14,7 @@ import { CvButton, Pill } from "@/components/ui/cv";
 import { WorkspaceProvider, useWorkspace } from "@/state/executionStore";
 import { examples } from "@/data/examples";
 import { SUPPORTED_LANGUAGES, type SupportedLanguage } from "@/types/languages";
+import { cn } from "@/lib/utils";
 
 const searchSchema = z.object({ example: z.string().optional() });
 
@@ -42,83 +43,141 @@ export const Route = createFileRoute("/visualize")({
 });
 
 function StatusHint() {
-  const { status, error, isExecuting, detectedFunction } = useWorkspace();
+  const { isExecuting, error } = useWorkspace();
 
   if (isExecuting) {
     return (
-      <p className="flex items-center gap-2 text-[12.5px] text-primary">
-        <Loader2 size={13} className="animate-spin" />
-        <span>Executing code…</span>
-      </p>
+      <div className="flex items-center gap-1.5 font-mono text-[11px] text-primary">
+        <Loader2 size={12} className="animate-spin" />
+        <span>Executing algorithm…</span>
+      </div>
     );
   }
 
-  if (status === "error" && error) {
+  if (error) {
     return (
-      <p className="flex items-start gap-2 text-[12.5px] text-[var(--viz-delete)]">
-        <AlertCircle size={13} className="mt-0.5 shrink-0" />
-        <span>
-          Line {error.line}: {error.message}
-        </span>
-      </p>
+      <div className="flex items-center gap-1.5 font-mono text-[11px] text-[var(--viz-delete)]">
+        <AlertCircle size={12} />
+        <span>{error.message}</span>
+      </div>
     );
   }
 
-  const copy: Partial<Record<typeof status, string>> = {
-    empty: "Write code or load an example to begin.",
-    missingInput: "Add input data to run this algorithm.",
-    invalidInput: "Fix the input format before running.",
-    noTargetSelected: "Pick which structure to visualize.",
-    ready: detectedFunction
-      ? `Detected: ${detectedFunction.name}() — press Visualize.`
-      : "Ready — press Visualize.",
-  };
-  const text = copy[status];
-  return text ? <p className="text-[12.5px] text-text-tertiary">{text}</p> : null;
+  return (
+    <div className="flex items-center gap-1.5 font-mono text-[11px] text-text-tertiary">
+      <Zap size={11} className="text-primary" />
+      <span>Ready to visualize</span>
+    </div>
+  );
 }
 
 function ExecutionStats() {
   const { events, executionTimeMs } = useWorkspace();
-  if (!events.length || executionTimeMs === null) return null;
+  if (!events.length) return null;
 
   return (
     <div className="flex items-center gap-2">
       <Pill tone="accent">
-        <Zap size={10} className="mr-1" />
+        <Sparkles size={10} className="mr-1" />
         {events.length} steps
       </Pill>
-      <Pill>
-        <Clock size={10} className="mr-1" />
-        {executionTimeMs < 1 ? "<1" : executionTimeMs}ms
-      </Pill>
+      {executionTimeMs !== null && (
+        <Pill>
+          <Clock size={10} className="mr-1" />
+          {executionTimeMs < 1 ? "<1" : executionTimeMs}ms
+        </Pill>
+      )}
     </div>
   );
 }
+
+type MobileTab = "code" | "canvas" | "trace";
 
 function VisualizePage() {
   const { example } = Route.useSearch();
   const navigate = useNavigate();
   const store = useWorkspace();
-  const { code, language, dispatch, loadExampleBySlug, run, canRun, viz, events, title, isExecuting, consoleLogs } = store;
+  const { code, language, dispatch, loadExampleBySlug, run, canRun, viz, events, currentStep, title, isExecuting, consoleLogs } = store;
+  const [mobileTab, setMobileTab] = useState<MobileTab>("code");
 
   useEffect(() => {
     if (example) loadExampleBySlug(example);
   }, [example, loadExampleBySlug]);
 
+  const handleRun = () => {
+    run();
+    setMobileTab("canvas");
+  };
+
   return (
     <div className="flex h-screen max-h-screen flex-col overflow-hidden bg-background">
       <GlobalNav />
 
-      <div className="flex flex-1 min-h-0 gap-3.5 px-4 pb-3 pt-2.5 lg:flex-row lg:overflow-hidden lg:px-5">
+      {/* iOS Mobile Segmented Tab Bar */}
+      <div className="flex shrink-0 items-center justify-center px-3.5 pt-1.5 pb-0.5 lg:hidden">
+        <div className="grid w-full grid-cols-3 rounded-[11px] bg-surface-2/80 p-1 border border-hairline shadow-inner">
+          <button
+            type="button"
+            onClick={() => setMobileTab("code")}
+            className={cn(
+              "flex items-center justify-center gap-1.5 rounded-[8px] py-1.5 font-sans text-[12px] font-medium transition-all duration-200",
+              mobileTab === "code"
+                ? "bg-surface-1 text-foreground shadow-sm font-semibold"
+                : "text-text-secondary hover:text-foreground",
+            )}
+          >
+            <Code2 size={13} />
+            <span>Code</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setMobileTab("canvas")}
+            className={cn(
+              "flex items-center justify-center gap-1.5 rounded-[8px] py-1.5 font-sans text-[12px] font-medium transition-all duration-200",
+              mobileTab === "canvas"
+                ? "bg-surface-1 text-foreground shadow-sm font-semibold"
+                : "text-text-secondary hover:text-foreground",
+            )}
+          >
+            <Sparkles size={13} />
+            <span>Canvas</span>
+            {events.length > 0 && <span className="h-1.5 w-1.5 rounded-full bg-primary" />}
+          </button>
+          <button
+            type="button"
+            onClick={() => setMobileTab("trace")}
+            className={cn(
+              "flex items-center justify-center gap-1.5 rounded-[8px] py-1.5 font-sans text-[12px] font-medium transition-all duration-200",
+              mobileTab === "trace"
+                ? "bg-surface-1 text-foreground shadow-sm font-semibold"
+                : "text-text-secondary hover:text-foreground",
+            )}
+          >
+            <History size={13} />
+            <span>Trace</span>
+            {events.length > 0 && (
+              <span className="font-mono text-[9.5px] text-text-tertiary">({currentStep + 1}/{events.length})</span>
+            )}
+          </button>
+        </div>
+      </div>
+
+      {/* Main Workspace Layout */}
+      <div className="flex flex-1 min-h-0 gap-3.5 px-3.5 pb-2.5 pt-1.5 lg:flex-row lg:overflow-hidden lg:px-5 lg:pb-3 lg:pt-2.5">
         {/* Left rail: code + inputs + config */}
-        <aside className="flex w-full flex-col gap-3 lg:w-[41%] lg:min-w-[420px] lg:h-full lg:min-h-0 lg:overflow-y-auto cv-scrollbar pr-0.5">
+        <aside
+          className={cn(
+            "flex-col gap-3 lg:w-[41%] lg:min-w-[420px] lg:h-full lg:min-h-0 lg:overflow-y-auto cv-scrollbar pr-0.5",
+            mobileTab === "code" ? "flex w-full h-full min-h-0 overflow-y-auto" : "hidden lg:flex",
+          )}
+        >
           <section className="animate-panel-in glass overflow-hidden rounded-[16px] shrink-0">
-            <header className="flex items-center justify-between gap-2 border-b border-hairline px-3.5 py-2">
+            <header className="flex flex-wrap items-center justify-between gap-2 border-b border-hairline px-3.5 py-2">
               <input
                 value={title}
                 onChange={(e) => dispatch({ type: "setTitle", title: e.target.value })}
                 aria-label="Session title"
-                className="min-w-0 flex-1 bg-transparent text-[13.5px] font-medium text-foreground outline-none"
+                className="min-w-[120px] flex-1 bg-transparent text-[13px] sm:text-[13.5px] font-medium text-foreground outline-none"
               />
               <div className="flex shrink-0 items-center gap-1.5">
                 <button
@@ -168,10 +227,10 @@ function VisualizePage() {
                   ))}
                 </select>
 
-                {/* Primary Visualize Action Button right in header */}
+                {/* Primary Visualize Action Button */}
                 <CvButton
                   size="sm"
-                  onClick={run}
+                  onClick={handleRun}
                   disabled={!canRun}
                   className="h-7 px-3 text-[11.5px] font-semibold shadow-sm"
                 >
@@ -193,8 +252,8 @@ function VisualizePage() {
                 activeLine={events.length ? viz?.line : undefined}
                 errorLine={store.error?.line}
                 readOnly={isExecuting}
-                minHeight={260}
-                className="max-h-[36vh]"
+                minHeight={240}
+                className="max-h-[38vh] sm:max-h-[36vh]"
               />
               {isExecuting && (
                 <div className="absolute inset-0 z-20 flex items-center justify-center bg-surface-1/60 backdrop-blur-[2px]">
@@ -221,7 +280,12 @@ function VisualizePage() {
         </aside>
 
         {/* Canvas Center Area */}
-        <main className="relative flex min-h-0 flex-1 flex-col overflow-hidden rounded-[18px] border border-hairline bg-surface-1/40">
+        <main
+          className={cn(
+            "relative flex-1 min-h-0 flex-col overflow-hidden rounded-[18px] border border-hairline bg-surface-1/40",
+            mobileTab === "canvas" ? "flex w-full h-full" : "hidden lg:flex",
+          )}
+        >
           <header className="flex shrink-0 items-center justify-between gap-3 border-b border-hairline px-4 py-2.5">
             <div className="flex items-center gap-2">
               <Sparkles size={13} className="text-primary" />
@@ -233,8 +297,13 @@ function VisualizePage() {
             </div>
           </header>
 
-          <div className="flex-1 min-h-0 overflow-auto px-5 py-6 cv-scrollbar">
+          <div className="flex-1 min-h-0 overflow-auto px-4 py-5 sm:px-5 sm:py-6 cv-scrollbar">
             <VisualizationCanvas />
+          </div>
+
+          {/* Mobile playback bar docked inside canvas for easy one-hand thumb control */}
+          <div className="block lg:hidden border-t border-hairline bg-surface-1/70 px-3 py-2 shrink-0">
+            <PlaybackControls />
           </div>
 
           {events.length ? (
@@ -245,8 +314,13 @@ function VisualizePage() {
         </main>
 
         {/* Right rail: Playback Controls & Timeline + Full-Height Trace Stream */}
-        <aside className="flex w-full flex-col gap-3 lg:w-[26%] lg:min-w-[280px] lg:h-full lg:min-h-0">
-          <section className="animate-panel-in glass rounded-[16px] p-3.5 shrink-0 shadow-sm">
+        <aside
+          className={cn(
+            "flex-col gap-3 lg:w-[26%] lg:min-w-[280px] lg:h-full lg:min-h-0",
+            mobileTab === "trace" ? "flex w-full h-full min-h-0 overflow-y-auto" : "hidden lg:flex",
+          )}
+        >
+          <section className="animate-panel-in glass rounded-[16px] p-3.5 shrink-0 shadow-sm hidden lg:block">
             <PlaybackControls />
           </section>
 

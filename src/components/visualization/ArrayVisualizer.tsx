@@ -69,12 +69,7 @@ export function ArrayVisualizer({
         </div>
       ) : null}
 
-      <div
-        className={cn(
-          "relative w-full",
-          large && "overflow-x-auto [mask-image:linear-gradient(to_right,transparent,black_24px,black_calc(100%-24px),transparent)]",
-        )}
-      >
+      <div className="relative w-full overflow-x-auto cv-scrollbar py-1">
         <div className="inline-flex min-w-full flex-col items-start gap-1.5 px-1 py-1">
           {/* pointer lane above the row */}
           <div className="flex items-end gap-1.5">

@@ -82,7 +82,7 @@ export function DPVisualizer({
         </Pill>
       </div>
 
-      <div className={cn("w-full", (cols > 12 || grid.length > 12) && "max-h-[440px] overflow-auto")}>
+      <div className={cn("w-full overflow-auto cv-scrollbar pb-1", (cols > 12 || grid.length > 12) && "max-h-[440px]")}>
         <div className="relative inline-block" style={{ width, minHeight: height }}>
           {/* axis labels */}
           <div className="absolute left-0 top-0 font-mono text-[11px] text-text-tertiary">

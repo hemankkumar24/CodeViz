@@ -49,7 +49,7 @@ export function MatrixVisualizer({
         </Pill>
       </div>
 
-      <div className={cn("w-full", large && "max-h-[420px] overflow-auto")}>
+      <div className={cn("w-full overflow-auto cv-scrollbar pb-1", large && "max-h-[420px]")}>
         <div className="inline-block">
           <div className="flex gap-1.5 pl-8">
             {Array.from({ length: cols }).map((_, c) => (
