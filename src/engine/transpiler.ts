@@ -285,75 +285,47 @@ function transpileCpp(code: string): string {
       continue;
     }
 
-    // 4. 2D DP vector: vector<vector<int>> dp(n + 1, vector<int>(capacity + 1, 0)); or without fill value
-    if (/vector\s*<\s*vector\s*<[^>]+>\s*>\s+(\w+)\s*\((.+?),\s*vector\s*<[^>]+>\s*\((.+?)\)\);/.test(line)) {
-      line = line.replace(
-        /vector\s*<\s*vector\s*<[^>]+>\s*>\s+(\w+)\s*\((.+?),\s*vector\s*<[^>]+>\s*\((.+?)\)\);/,
-        (_, name, rows, inner) => {
-          const innerParts = splitTopLevelCommas(inner);
-          const cols = innerParts[0]!;
-          const fill = innerParts.length > 1 ? innerParts[1]! : "0";
-          return `let ${name} = Array.from({length: ${rows}}, () => new Array(${cols}).fill(${fill}));`;
-        },
-      );
-      result.push(line);
-      continue;
+    // 4. Any N-dimensional vector declaration (1D, 2D, 3D, 4D, etc. with or without constructor args)
+    if (trimmed.startsWith("vector<") || /^\s*vector\s*</.test(line)) {
+      const transpiledVec = transpileVectorDeclaration(line);
+      if (transpiledVec) {
+        let cleanVec = transpiledVec.replace(/\.size\(\)/g, ".length");
+        result.push(cleanVec);
+        continue;
+      }
     }
 
-    // 5. 1D DP vector: vector<int> dp(n + 1); or vector<int> dp(n + 1, 0);
-    if (/vector\s*<[^>]+>\s+(\w+)\s*\((.+?)\);/.test(line)) {
-      line = line.replace(
-        /vector\s*<[^>]+>\s+(\w+)\s*\((.+?)\);/,
-        (_, name, args) => {
-          const parts = splitTopLevelCommas(args);
-          if (parts.length === 1) {
-            return `let ${name} = new Array(${parts[0]}).fill(0);`;
-          } else {
-            return `let ${name} = new Array(${parts[0]}).fill(${parts[1]});`;
-          }
-        },
-      );
-      line = line.replace(/\.size\(\)/g, ".length");
-      result.push(line);
-      continue;
-    }
-
-    // 6. Initializer list vector / set: vector<int> queue = {start}; or unordered_set<int> seen = {start};
-    if (/(?:vector<[^>]+>|unordered_set<[^>]+>|set<[^>]+>|unordered_map<[^>]+>|map<[^>]+>|pair<[^>]+>)\s+(\w+)\s*=\s*\{([^}]+)\};/.test(line)) {
+    // 5. Initializer list vector / set: vector<int> queue = {start}; or unordered_set<int> seen = {start};
+    if (/(?:vector\s*<[\s\S]*>|unordered_set\s*<[\s\S]*>|set\s*<[\s\S]*>|unordered_map\s*<[\s\S]*>|map\s*<[\s\S]*>|pair\s*<[\s\S]*>)\s+(\w+)\s*=\s*\{([^}]+)\};/.test(line)) {
       if (line.includes("unordered_set") || line.includes("set<")) {
-        line = line.replace(/(?:unordered_set<[^>]+>|set<[^>]+>)\s+(\w+)\s*=\s*\{([^}]+)\};/, "let $1 = new Set([$2]);");
+        line = line.replace(/(?:unordered_set\s*<[\s\S]*>|set\s*<[\s\S]*>)\s+(\w+)\s*=\s*\{([^}]+)\};/, "let $1 = new Set([$2]);");
       } else if (line.includes("map")) {
-        line = line.replace(/(?:unordered_map<[^>]+>|map<[^>]+>)\s+(\w+)\s*=\s*\{([^}]+)\};/, "let $1 = new Map([$2]);");
+        line = line.replace(/(?:unordered_map\s*<[\s\S]*>|map\s*<[\s\S]*>)\s+(\w+)\s*=\s*\{([^}]+)\};/, "let $1 = new Map([$2]);");
       } else {
-        line = line.replace(/(?:vector<[^>]+>|pair<[^>]+>)\s+(\w+)\s*=\s*\{([^}]+)\};/, "let $1 = [$2];");
+        line = line.replace(/(?:vector\s*<[\s\S]*>|pair\s*<[\s\S]*>)\s+(\w+)\s*=\s*\{([^}]+)\};/, "let $1 = [$2];");
       }
       result.push(line);
       continue;
     }
 
-    // 7. Empty containers: vector, queue, stack, deque, unordered_set, set, unordered_map, map
-    if (/vector\s*<[^>]+>\s+(\w+);/.test(line)) {
-      line = line.replace(/vector\s*<[^>]+>\s+(\w+);/, "let $1 = [];");
+    // 6. Empty containers: queue, stack, deque, unordered_set, set, unordered_map, map
+    if (/(?:queue|stack|deque|priority_queue)\s*<[\s\S]*>\s+(\w+);/.test(line)) {
+      line = line.replace(/(?:queue|stack|deque|priority_queue)\s*<[\s\S]*>\s+(\w+);/, "let $1 = [];");
       result.push(line);
       continue;
     }
-    if (/(?:queue|stack|deque|priority_queue)\s*<[^>]+>\s+(\w+);/.test(line)) {
-      line = line.replace(/(?:queue|stack|deque|priority_queue)\s*<[^>]+>\s+(\w+);/, "let $1 = [];");
+    if (/(?:unordered_set|set)\s*<[\s\S]*>\s+(\w+);/.test(line)) {
+      line = line.replace(/(?:unordered_set|set)\s*<[\s\S]*>\s+(\w+);/, "let $1 = new Set();");
       result.push(line);
       continue;
     }
-    if (/(?:unordered_set|set)\s*<[^>]+>\s+(\w+);/.test(line)) {
-      line = line.replace(/(?:unordered_set|set)\s*<[^>]+>\s+(\w+);/, "let $1 = new Set();");
-      result.push(line);
-      continue;
-    }
-    if (/(?:unordered_map|map)\s*<[^>]+>\s+(\w+);/.test(line)) {
-      line = line.replace(/(?:unordered_map|map)\s*<[^>]+>\s+(\w+);/, "let $1 = new Map();");
+    if (/(?:unordered_map|map)\s*<[\s\S]*>\s+(\w+);/.test(line)) {
+      line = line.replace(/(?:unordered_map|map)\s*<[\s\S]*>\s+(\w+);/, "let $1 = new Map();");
       result.push(line);
       continue;
     }
 
-    // 8. C-style 1D / 2D arrays: int dp[n + 1]; or int dp[n + 1][m + 1];
+    // 7. C-style 1D / 2D arrays: int dp[n + 1]; or int dp[n + 1][m + 1];
     if (/^\s*(?:int|bool|double|float|long|long\s+long)\s+(\w+)\s*\[(.+?)\]\s*\[(.+?)\];/.test(line)) {
       line = line.replace(
         /^\s*(?:int|bool|double|float|long|long\s+long)\s+(\w+)\s*\[(.+?)\]\s*\[(.+?)\];/,
@@ -371,22 +343,19 @@ function transpileCpp(code: string): string {
       continue;
     }
 
-    // 9. Function or Method header: vector<int> insertionSort(...) { or pair<int, int> searchWithLimits(...) {
-    const fnMatch = /^\s*(?:(?:virtual|inline|static|const)\s+)*(?:vector<[^>]+>|pair<[^>]+>|tuple<[^>]+>|unordered_set<[^>]+>|set<[^>]+>|unordered_map<[^>]+>|map<[^>]+>|queue<[^>]+>|stack<[^>]+>|int|long\s+long|long|void|bool|string|double|float|size_t|auto)\s+(\w+)\s*\((.*?)\)\s*\{?/.exec(line);
-
-    if (fnMatch && !["if", "while", "for", "switch", "catch", "return"].includes(fnMatch[1]!)) {
-      const fnName = fnMatch[1]!;
-      const params = fnMatch[2]!;
-      const cleanedParams = cleanCppParams(params);
+    // 8. Function or Method header (handles any return type including nested templates)
+    const fnHeader = parseCppFunctionHeader(line);
+    if (fnHeader) {
+      const cleanedParams = cleanCppParams(fnHeader.params);
       if (inClass) {
-        result.push(`    ${fnName}(${cleanedParams}) {`);
+        result.push(`    ${fnHeader.name}(${cleanedParams}) {`);
       } else {
-        result.push(`function ${fnName}(${cleanedParams}) {`);
+        result.push(`function ${fnHeader.name}(${cleanedParams}) {`);
       }
       continue;
     }
 
-    // 10. Range-based for loop: for (int nxt : graph[node])
+    // 9. Range-based for loop: for (int nxt : graph[node])
     if (/for\s*\(\s*(?:int|long\s+long|long|auto|const\s+auto&?)\s+(\w+)\s*:\s*(.+?)\)/.test(line)) {
       line = line.replace(
         /for\s*\(\s*(?:int|long\s+long|long|auto|const\s+auto&?)\s+(\w+)\s*:\s*(.+?)\)/,
@@ -394,23 +363,24 @@ function transpileCpp(code: string): string {
       );
     }
 
-    // 11. Variable declarations: int currentSum = nums[0], maxSum = nums[0];
+    // 10. Variable declarations: int currentSum = nums[0], maxSum = nums[0];
     line = line.replace(
       /^\s*(?:int|long\s+long|long|double|float|bool|char|string|auto|size_t|pair<[^>]+>)\s+([^;]+);/,
       "let $1;",
     );
 
-    // 12. For loops: for (int i = 1; i < nums.size(); i++)
+    // 11. For loops: for (int i = 1; i < nums.size(); i++)
     line = line.replace(/for\s*\(\s*(?:int|long\s+long|long|size_t|auto)\s+/g, "for (let ");
 
-    // 13. Integer mid calculation: (left + right) / 2 -> Math.floor((left + right) / 2)
+    // 12. Integer mid calculation: (left + right) / 2 -> Math.floor((left + right) / 2)
     line = line.replace(/=\s*\((\w+\s*[+\-]\s*\w+)\)\s*\/\s*2;/g, "= Math.floor(($1) / 2);");
+    line = line.replace(/=\s*\((\w+\s*-\s*\w+)\)\s*\/\s*2;/g, "= Math.floor(($1) / 2);");
     line = line.replace(/=\s*(\w+)\s*\+\s*\((\w+\s*-\s*\w+)\)\s*\/\s*2;/g, "= $1 + Math.floor(($2) / 2);");
 
-    // 14. Return vector conversion: return vector<int>(seen.begin(), seen.end());
-    line = line.replace(/return\s+vector<[^>]+>\((\w+)\.begin\(\),\s*\1\.end\(\)\);/g, "return Array.from($1);");
+    // 13. Return vector conversion: return vector<int>(seen.begin(), seen.end());
+    line = line.replace(/return\s+vector<[\s\S]*>\((\w+)\.begin\(\),\s*\1\.end\(\)\);/g, "return Array.from($1);");
 
-    // 15. Standard C++ STL method replacements
+    // 14. Standard C++ STL method replacements
     line = line.replace(/\.size\(\)/g, ".length");
     line = line.replace(/\.length\(\)/g, ".length");
     line = line.replace(/\.push_back\(/g, ".push(");
@@ -480,4 +450,111 @@ function splitTopLevelCommas(str: string): string[] {
 
   if (current.trim()) result.push(current.trim());
   return result;
+}
+
+function parseVectorCall(str: string): { type: string; name?: string | undefined; args: string } | null {
+  const trimmed = str.trim().replace(/;$/, "");
+  if (!trimmed.startsWith("vector")) return null;
+
+  let depth = 0;
+  let angleEnd = -1;
+  for (let i = 0; i < trimmed.length; i++) {
+    const ch = trimmed[i]!;
+    if (ch === "<") {
+      depth++;
+    } else if (ch === ">") {
+      depth--;
+      if (depth === 0) {
+        angleEnd = i;
+        break;
+      }
+    }
+  }
+  if (angleEnd === -1) return null;
+
+  const type = trimmed.slice(0, angleEnd + 1).trim();
+  const rest = trimmed.slice(angleEnd + 1).trim();
+
+  const openParen = rest.indexOf("(");
+  if (openParen === -1) {
+    return { type, name: rest.trim(), args: "" };
+  }
+
+  const name = rest.slice(0, openParen).trim();
+  const closeParen = rest.lastIndexOf(")");
+  if (closeParen === -1) return null;
+
+  const args = rest.slice(openParen + 1, closeParen).trim();
+  return { type, name: name || undefined, args };
+}
+
+function transpileVectorExpr(expr: string): string {
+  const parsed = parseVectorCall(expr);
+  if (!parsed) return expr;
+  if (!parsed.args) return "[]";
+
+  const parts = splitTopLevelCommas(parsed.args);
+  if (parts.length === 0) return "[]";
+
+  const dim = parts[0]!;
+  if (parts.length === 1) return `new Array(${dim}).fill(0)`;
+
+  const second = parts[1]!;
+  if (second.startsWith("vector")) {
+    const nested = transpileVectorExpr(second);
+    return `Array.from({length: ${dim}}, () => ${nested})`;
+  }
+
+  return `new Array(${dim}).fill(${second})`;
+}
+
+function transpileVectorDeclaration(line: string): string | null {
+  const parsed = parseVectorCall(line);
+  if (!parsed || !parsed.name) return null;
+
+  if (!parsed.args) {
+    return `let ${parsed.name} = [];`;
+  }
+
+  const parts = splitTopLevelCommas(parsed.args);
+  if (parts.length === 0) return `let ${parsed.name} = [];`;
+
+  const dim = parts[0]!;
+  if (parts.length === 1) return `let ${parsed.name} = new Array(${dim}).fill(0);`;
+
+  const second = parts[1]!;
+  if (second.startsWith("vector")) {
+    const nested = transpileVectorExpr(second);
+    return `let ${parsed.name} = Array.from({length: ${dim}}, () => ${nested});`;
+  }
+
+  return `let ${parsed.name} = new Array(${dim}).fill(${second});`;
+}
+
+function parseCppFunctionHeader(line: string): { name: string; params: string } | null {
+  const trimmed = line.trim();
+  if (/^(?:if|while|for|switch|catch|return)\b/.test(trimmed)) return null;
+
+  const openParen = trimmed.indexOf("(");
+  if (openParen === -1) return null;
+
+  const prefix = trimmed.slice(0, openParen).trim();
+  const rest = trimmed.slice(openParen);
+  const closeParen = rest.lastIndexOf(")");
+  if (closeParen === -1) return null;
+
+  const params = rest.slice(1, closeParen);
+
+  const nameMatch = /([A-Za-z_]\w*)$/.exec(prefix);
+  if (!nameMatch) return null;
+
+  const name = nameMatch[1]!;
+  if (["if", "while", "for", "switch", "catch", "return", "class", "struct"].includes(name)) {
+    return null;
+  }
+
+  const returnTypePart = prefix.slice(0, prefix.length - name.length).trim();
+  if (!returnTypePart) return null;
+
+  return { name, params };
 }
