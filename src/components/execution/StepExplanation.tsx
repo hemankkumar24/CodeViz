@@ -14,8 +14,8 @@ export function StepExplanation() {
     .reverse();
 
   return (
-    <div className="flex flex-col gap-3">
-      <div className="flex items-center justify-between">
+    <div className="flex h-full min-h-0 flex-1 flex-col gap-2.5">
+      <div className="flex shrink-0 items-center justify-between">
         <div className="flex items-center gap-1.5 font-mono text-[10.5px] uppercase tracking-[0.14em] text-text-tertiary">
           <History size={11} className="text-primary" />
           <span>This Step & History</span>
@@ -25,7 +25,7 @@ export function StepExplanation() {
         </span>
       </div>
 
-      <div className="flex max-h-[440px] flex-col gap-2 overflow-y-auto pr-1 cv-scrollbar">
+      <div className="flex flex-1 min-h-0 flex-col gap-2 overflow-y-auto pr-1 cv-scrollbar">
         {history.map(({ event, originalIndex }, idx) => {
           const isCurrent = idx === 0;
 

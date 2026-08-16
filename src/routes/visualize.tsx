@@ -107,21 +107,21 @@ function VisualizePage() {
   }, [example, loadExampleBySlug]);
 
   return (
-    <div className="flex min-h-screen flex-col bg-background">
+    <div className="flex h-screen max-h-screen flex-col overflow-hidden bg-background">
       <GlobalNav />
 
-      <div className="flex flex-1 flex-col gap-4 px-4 pb-28 pt-4 lg:h-[calc(100vh-3.75rem)] lg:flex-row lg:overflow-hidden lg:px-5">
-        {/* Left rail: code + config */}
-        <aside className="flex w-full flex-col gap-4 lg:w-[41%] lg:min-w-[420px] lg:overflow-y-auto">
-          <section className="animate-panel-in glass overflow-hidden rounded-[16px]">
-            <header className="flex items-center justify-between gap-3 border-b border-hairline px-4 py-2.5">
+      <div className="flex flex-1 min-h-0 gap-3.5 px-4 pb-3 pt-2.5 lg:flex-row lg:overflow-hidden lg:px-5">
+        {/* Left rail: code + inputs + config */}
+        <aside className="flex w-full flex-col gap-3 lg:w-[41%] lg:min-w-[420px] lg:h-full lg:min-h-0 lg:overflow-y-auto cv-scrollbar pr-0.5">
+          <section className="animate-panel-in glass overflow-hidden rounded-[16px] shrink-0">
+            <header className="flex items-center justify-between gap-2 border-b border-hairline px-3.5 py-2">
               <input
                 value={title}
                 onChange={(e) => dispatch({ type: "setTitle", title: e.target.value })}
                 aria-label="Session title"
                 className="min-w-0 flex-1 bg-transparent text-[13.5px] font-medium text-foreground outline-none"
               />
-              <div className="flex shrink-0 items-center gap-2">
+              <div className="flex shrink-0 items-center gap-1.5">
                 <button
                   type="button"
                   onClick={() => {
@@ -129,16 +129,16 @@ function VisualizePage() {
                     navigate({ to: "/visualize", search: {} });
                   }}
                   title="Clear code & reset to blank editor"
-                  className="flex items-center gap-1.5 rounded-[8px] border border-hairline bg-surface-1 px-2.5 py-1 font-mono text-[11.5px] font-medium text-text-secondary transition-colors hover:border-primary/50 hover:bg-surface-2 hover:text-foreground"
+                  className="flex items-center gap-1 rounded-[7px] border border-hairline bg-surface-1 px-2 py-1 font-mono text-[11px] font-medium text-text-secondary transition-colors hover:border-primary/50 hover:bg-surface-2 hover:text-foreground"
                 >
-                  <RotateCcw size={11} className="text-text-tertiary" />
+                  <RotateCcw size={10.5} className="text-text-tertiary" />
                   <span>Clear</span>
                 </button>
                 <select
                   aria-label="Select programming language"
                   value={language}
                   onChange={(e) => dispatch({ type: "setLanguage", language: e.target.value as SupportedLanguage })}
-                  className="rounded-[8px] border border-hairline bg-surface-1 px-2.5 py-1 font-mono text-[11.5px] font-medium text-text-secondary outline-none transition-colors hover:text-foreground focus:border-primary/50"
+                  className="rounded-[7px] border border-hairline bg-surface-1 px-2 py-1 font-mono text-[11px] font-medium text-text-secondary outline-none transition-colors hover:text-foreground focus:border-primary/50"
                 >
                   {SUPPORTED_LANGUAGES.map((lang) => (
                     <option key={lang.id} value={lang.id}>
@@ -157,10 +157,10 @@ function VisualizePage() {
                       navigate({ to: "/visualize", search: { example: e.target.value } });
                     }
                   }}
-                  className="rounded-[8px] border border-hairline bg-surface-1 px-2.5 py-1 font-mono text-[11.5px] text-text-secondary outline-none transition-colors hover:text-foreground focus:border-primary/50"
+                  className="rounded-[7px] border border-hairline bg-surface-1 px-2 py-1 font-mono text-[11px] text-text-secondary outline-none transition-colors hover:text-foreground focus:border-primary/50"
                 >
                   <option value="">Load example…</option>
-                  <option value="__clear__">✨ Blank / Custom Code</option>
+                  <option value="__clear__">✨ Blank / Custom</option>
                   <option disabled>──────────</option>
                   {examples.map((ex) => (
                     <option key={ex.slug} value={ex.slug}>
@@ -168,6 +168,21 @@ function VisualizePage() {
                     </option>
                   ))}
                 </select>
+
+                {/* Primary Visualize Action Button right in header */}
+                <CvButton
+                  size="sm"
+                  onClick={run}
+                  disabled={!canRun}
+                  className="h-7 px-3 text-[11.5px] font-semibold shadow-sm"
+                >
+                  {isExecuting ? (
+                    <Loader2 size={12} strokeWidth={2.5} className="animate-spin" />
+                  ) : (
+                    <Play size={12} strokeWidth={2.5} className="fill-current" />
+                  )}
+                  <span>{isExecuting ? "Running…" : "Visualize"}</span>
+                </CvButton>
               </div>
             </header>
 
@@ -179,8 +194,8 @@ function VisualizePage() {
                 activeLine={events.length ? viz?.line : undefined}
                 errorLine={store.error?.line}
                 readOnly={isExecuting}
-                minHeight={320}
-                className="max-h-[46vh]"
+                minHeight={260}
+                className="max-h-[36vh]"
               />
               {isExecuting && (
                 <div className="absolute inset-0 z-20 flex items-center justify-center bg-surface-1/60 backdrop-blur-[2px]">
@@ -193,30 +208,22 @@ function VisualizePage() {
             </div>
           </section>
 
-          <section className="animate-panel-in glass rounded-[16px] p-4">
+          <section className="animate-panel-in glass rounded-[16px] p-3.5 shrink-0">
             <InputPanel />
           </section>
 
-          <section className="animate-panel-in glass rounded-[16px] p-4">
+          <section className="animate-panel-in glass rounded-[16px] p-3.5 shrink-0">
             <VisualizationControls />
           </section>
 
-          <div className="flex items-center gap-3 pb-2">
-            <CvButton onClick={run} disabled={!canRun}>
-              {isExecuting ? (
-                <Loader2 size={14} strokeWidth={2} className="animate-spin" />
-              ) : (
-                <Play size={14} strokeWidth={2} />
-              )}
-              {isExecuting ? "Executing…" : "Visualize"}
-            </CvButton>
+          <div className="flex items-center gap-3 px-1 pb-1 shrink-0">
             <StatusHint />
           </div>
         </aside>
 
-        {/* Canvas */}
-        <main className="relative flex min-h-[60vh] flex-1 flex-col overflow-hidden rounded-[18px] border border-hairline bg-surface-1/40">
-          <header className="flex items-center justify-between gap-3 border-b border-hairline px-5 py-2.5">
+        {/* Canvas Center Area */}
+        <main className="relative flex min-h-0 flex-1 flex-col overflow-hidden rounded-[18px] border border-hairline bg-surface-1/40">
+          <header className="flex shrink-0 items-center justify-between gap-3 border-b border-hairline px-4 py-2.5">
             <div className="flex items-center gap-2">
               <Sparkles size={13} className="text-primary" />
               <span className="font-mono text-[11.5px] text-text-secondary">Canvas</span>
@@ -227,33 +234,42 @@ function VisualizePage() {
             </div>
           </header>
 
-          <div className="flex-1 overflow-auto px-5 py-8">
+          <div className="flex-1 min-h-0 overflow-auto px-5 py-6 pb-20 cv-scrollbar">
             <VisualizationCanvas />
           </div>
 
           {events.length ? (
-            <div className="border-t border-hairline px-5 py-3">
+            <div className="border-t border-hairline px-4 py-2.5 shrink-0">
               <VariableInspector layout="strip" variables={viz?.variables ?? {}} previous={events[Math.max(0, (viz?.step ?? 0) - 1)]?.variables} />
             </div>
           ) : null}
+
+          {/* Floating docked Playback Controls inside Canvas */}
+          {events.length > 0 && (
+            <div className="pointer-events-none absolute inset-x-0 bottom-4 z-30 flex justify-center px-4">
+              <PlaybackControls />
+            </div>
+          )}
         </main>
 
-        {/* Right rail */}
-        <aside className="flex w-full flex-col gap-4 lg:w-[22%] lg:min-w-[240px] lg:overflow-y-auto">
-          <section className="animate-panel-in glass rounded-[16px] p-4">
+        {/* Right rail: Timeline + Full-Height Trace Stream */}
+        <aside className="flex w-full flex-col gap-3 lg:w-[26%] lg:min-w-[280px] lg:h-full lg:min-h-0">
+          <section className="animate-panel-in glass rounded-[16px] p-3.5 shrink-0">
             <ExecutionTimeline />
           </section>
-          <section className="animate-panel-in glass rounded-[16px] p-4">
+
+          <section className="animate-panel-in glass rounded-[16px] p-3.5 flex-1 min-h-0 flex flex-col overflow-hidden">
             <StepExplanation />
           </section>
+
           {consoleLogs.length > 0 && (
-            <section className="animate-panel-in glass rounded-[16px] p-4">
-              <p className="mb-2 font-mono text-[10.5px] uppercase tracking-[0.14em] text-text-tertiary">
+            <section className="animate-panel-in glass rounded-[16px] p-3 shrink-0">
+              <p className="mb-1.5 font-mono text-[10px] uppercase tracking-[0.14em] text-text-tertiary">
                 Console Output
               </p>
-              <div className="max-h-[200px] overflow-auto rounded-[8px] bg-surface-1 p-3">
+              <div className="max-h-[120px] overflow-auto rounded-[8px] bg-surface-1 p-2.5 cv-scrollbar">
                 {consoleLogs.map((log, i) => (
-                  <p key={i} className="font-mono text-[12px] text-text-secondary">
+                  <p key={i} className="font-mono text-[11.5px] text-text-secondary">
                     {log.map((v) => (typeof v === "object" ? JSON.stringify(v) : String(v))).join(" ")}
                   </p>
                 ))}
@@ -261,10 +277,6 @@ function VisualizePage() {
             </section>
           )}
         </aside>
-      </div>
-
-      <div className="pointer-events-none fixed inset-x-0 bottom-5 z-40 flex justify-center px-4">
-        <PlaybackControls />
       </div>
     </div>
   );
