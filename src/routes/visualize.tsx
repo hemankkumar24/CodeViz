@@ -9,7 +9,6 @@ import { InputPanel } from "@/components/input/InputPanel";
 import { VisualizationCanvas } from "@/components/visualization/VisualizationCanvas";
 import { VariableInspector } from "@/components/visualization/VariableInspector";
 import { PlaybackControls } from "@/components/execution/PlaybackControls";
-import { ExecutionTimeline } from "@/components/execution/ExecutionTimeline";
 import { StepExplanation } from "@/components/execution/StepExplanation";
 import { CvButton, Pill } from "@/components/ui/cv";
 import { WorkspaceProvider, useWorkspace } from "@/state/executionStore";
@@ -234,7 +233,7 @@ function VisualizePage() {
             </div>
           </header>
 
-          <div className="flex-1 min-h-0 overflow-auto px-5 py-6 pb-20 cv-scrollbar">
+          <div className="flex-1 min-h-0 overflow-auto px-5 py-6 cv-scrollbar">
             <VisualizationCanvas />
           </div>
 
@@ -243,19 +242,12 @@ function VisualizePage() {
               <VariableInspector layout="strip" variables={viz?.variables ?? {}} previous={events[Math.max(0, (viz?.step ?? 0) - 1)]?.variables} />
             </div>
           ) : null}
-
-          {/* Floating docked Playback Controls inside Canvas */}
-          {events.length > 0 && (
-            <div className="pointer-events-none absolute inset-x-0 bottom-4 z-30 flex justify-center px-4">
-              <PlaybackControls />
-            </div>
-          )}
         </main>
 
-        {/* Right rail: Timeline + Full-Height Trace Stream */}
+        {/* Right rail: Playback Controls & Timeline + Full-Height Trace Stream */}
         <aside className="flex w-full flex-col gap-3 lg:w-[26%] lg:min-w-[280px] lg:h-full lg:min-h-0">
-          <section className="animate-panel-in glass rounded-[16px] p-3.5 shrink-0">
-            <ExecutionTimeline />
+          <section className="animate-panel-in glass rounded-[16px] p-3.5 shrink-0 shadow-sm">
+            <PlaybackControls />
           </section>
 
           <section className="animate-panel-in glass rounded-[16px] p-3.5 flex-1 min-h-0 flex flex-col overflow-hidden">
