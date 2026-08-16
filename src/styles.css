@@ -119,6 +119,51 @@
   --sidebar-ring: oklch(0.667 0.174 262);
 }
 
+/* Apple iOS Light Theme — clean, gentle on eyes, grouped surfaces */
+:root.light {
+  --background: oklch(0.965 0.005 260); /* Apple iOS System Gray 6 / grouped background */
+  --surface-1: oklch(1 0 0); /* Pure Apple elevated white card */
+  --surface-2: oklch(0.935 0.006 260); /* Apple Secondary System Fill */
+  --surface-3: oklch(0.89 0.008 260); /* Apple Tertiary System Fill */
+  --foreground: oklch(0.16 0.01 260); /* Apple primary label */
+  --text-secondary: oklch(0.44 0.01 260); /* Apple secondary label */
+  --text-tertiary: oklch(0.62 0.01 260); /* Apple tertiary label */
+  --hairline: oklch(0 0 0 / 8%);
+  --hairline-strong: oklch(0 0 0 / 14%);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.16 0.01 260);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.16 0.01 260);
+  --primary: oklch(0.55 0.22 262); /* Apple iOS vibrant blue */
+  --primary-foreground: oklch(0.99 0 0);
+  --accent: oklch(0.55 0.22 262);
+  --accent-foreground: oklch(0.99 0 0);
+  --secondary: oklch(0.935 0.006 260);
+  --secondary-foreground: oklch(0.16 0.01 260);
+  --muted: oklch(0.935 0.006 260);
+  --muted-foreground: oklch(0.58 0.01 260);
+  --destructive: oklch(0.60 0.22 25);
+  --destructive-foreground: oklch(0.99 0 0);
+  --border: oklch(0 0 0 / 8%);
+  --input: oklch(0 0 0 / 10%);
+  --ring: oklch(0.55 0.22 262);
+
+  /* Data-visualization semantics in light mode */
+  --viz-insert: oklch(0.52 0.18 145);
+  --viz-update: oklch(0.62 0.18 65);
+  --viz-delete: oklch(0.55 0.22 25);
+  --viz-dep: oklch(0.52 0.18 300);
+
+  --sidebar: oklch(0.98 0.004 260);
+  --sidebar-foreground: oklch(0.16 0.01 260);
+  --sidebar-primary: oklch(0.55 0.22 262);
+  --sidebar-primary-foreground: oklch(0.99 0 0);
+  --sidebar-accent: oklch(0.935 0.006 260);
+  --sidebar-accent-foreground: oklch(0.16 0.01 260);
+  --sidebar-border: oklch(0 0 0 / 8%);
+  --sidebar-ring: oklch(0.55 0.22 262);
+}
+
 @layer base {
   * {
     border-color: var(--color-border);
@@ -129,6 +174,7 @@
     color: var(--color-foreground);
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
+    transition: background-color 0.2s ease, color 0.2s ease;
   }
 
   ::selection {
@@ -381,7 +427,7 @@
   box-shadow: inset 2px 0 0 0 var(--viz-delete);
 }
 
-/* Code editor syntax tokens */
+/* Code editor syntax tokens (Dark Mode default) */
 .cv-token-keyword {
   color: #c084fc; /* Vibrant purple / violet */
   font-weight: 600;
@@ -413,6 +459,81 @@
   color: #f1f5f9; /* Bright clean white */
 }
 
+/* Light Mode (Apple iOS / Xcode Developer Theme) */
+:root.light .glass {
+  background: color-mix(in oklab, var(--surface-1) 85%, transparent);
+  backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid var(--hairline);
+  box-shadow:
+    inset 0 1px 0 oklch(1 0 0 / 90%),
+    0 4px 20px oklch(0 0 0 / 4%);
+}
+
+:root.light .glass-subtle {
+  background: color-mix(in oklab, var(--surface-1) 68%, transparent);
+  backdrop-filter: blur(16px) saturate(160%);
+  border-bottom: 1px solid var(--hairline);
+}
+
+:root.light .glass-strong {
+  background: color-mix(in oklab, var(--surface-1) 94%, transparent);
+  backdrop-filter: blur(24px) saturate(190%);
+  border-bottom: 1px solid var(--hairline);
+  box-shadow:
+    inset 0 1px 0 oklch(1 0 0 / 95%),
+    0 8px 28px oklch(0 0 0 / 6%);
+}
+
+:root.light .cv-token-keyword {
+  color: #a80084; /* Apple Xcode Keyword Purple */
+  font-weight: 600;
+}
+
+:root.light .cv-token-type {
+  color: #0b6cb4; /* Apple Xcode Type Sky Blue */
+  font-weight: 500;
+}
+
+:root.light .cv-token-string {
+  color: #c41a16; /* Apple Xcode Coral Red */
+}
+
+:root.light .cv-token-number {
+  color: #1c00cf; /* Apple Xcode Navy Blue */
+}
+
+:root.light .cv-token-comment {
+  color: #64748b; /* Apple Xcode Muted Slate */
+  font-style: italic;
+}
+
+:root.light .cv-token-punct {
+  color: #475569;
+}
+
+:root.light .cv-token-id {
+  color: #0f172a; /* Deep clean charcoal */
+}
+
+:root.light .cv-active-line {
+  background: color-mix(in oklab, var(--primary) 12%, transparent);
+  box-shadow: inset 3px 0 0 0 var(--primary);
+}
+
+:root.light .cv-scrollbar::-webkit-scrollbar-thumb {
+  background: oklch(0 0 0 / 12%);
+}
+:root.light .cv-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: oklch(0 0 0 / 22%);
+}
+
+:root.light ::-webkit-scrollbar-thumb {
+  background: oklch(0 0 0 / 10%);
+}
+:root.light ::-webkit-scrollbar-thumb:hover {
+  background: oklch(0 0 0 / 20%);
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -423,7 +544,7 @@
   }
 }
 
-/* Scrollbars tuned for a dark developer surface */
+/* Scrollbars tuned for developer surface */
 ::-webkit-scrollbar {
   width: 10px;
   height: 10px;

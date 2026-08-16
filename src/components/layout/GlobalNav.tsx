@@ -1,8 +1,9 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Github, Menu, Moon, User, X } from "lucide-react";
+import { Github, Menu, Moon, Sun, User, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CvButton } from "@/components/ui/cv";
+import { useTheme } from "@/hooks/useTheme";
 import { Logo } from "./Logo";
 
 const links = [
@@ -14,6 +15,7 @@ const links = [
 export function GlobalNav() {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
+  const { theme, toggleTheme, isDark } = useTheme();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const inWorkspace = pathname.startsWith("/visualize");
 
@@ -53,11 +55,17 @@ export function GlobalNav() {
 
         <div className="ml-auto flex items-center gap-1.5">
           <button
+            type="button"
+            onClick={toggleTheme}
             className="hidden h-9 w-9 items-center justify-center rounded-[9px] text-text-tertiary transition-colors hover:bg-surface-2/70 hover:text-foreground sm:inline-flex"
-            aria-label="Theme (dark)"
-            title="Dark is the default theme"
+            aria-label={isDark ? "Switch to Light theme" : "Switch to Dark theme"}
+            title={isDark ? "Switch to Light Mode" : "Switch to Dark Mode"}
           >
-            <Moon size={16} strokeWidth={1.5} />
+            {isDark ? (
+              <Moon size={16} strokeWidth={1.5} />
+            ) : (
+              <Sun size={16} strokeWidth={1.5} />
+            )}
           </button>
           <a
             href="https://github.com"
@@ -107,6 +115,17 @@ export function GlobalNav() {
                 {l.label}
               </Link>
             ))}
+            <button
+              type="button"
+              onClick={toggleTheme}
+              className="flex items-center justify-between rounded-[9px] px-3 py-2.5 text-[14px] text-text-secondary hover:bg-surface-2/60 hover:text-foreground"
+            >
+              <span>Appearance</span>
+              <span className="flex items-center gap-1.5 text-xs text-text-tertiary">
+                {isDark ? <Moon size={14} /> : <Sun size={14} className="text-amber-500" />}
+                {isDark ? "Dark" : "Light"}
+              </span>
+            </button>
           </nav>
           {!inWorkspace ? (
             <Link to="/visualize" className="mt-3 block">
