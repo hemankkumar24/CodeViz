@@ -6,6 +6,7 @@ import { ExampleCard } from "@/components/examples/ExampleCard";
 import { EmptyState } from "@/components/ui/cv";
 import { allCategories, examples } from "@/data/examples";
 import { cn } from "@/lib/utils";
+import { useSmoothScroll } from "@/hooks/useSmoothScroll";
 
 const searchSchema = z.object({ category: z.string().optional() });
 
@@ -30,6 +31,7 @@ export const Route = createFileRoute("/examples")({
 });
 
 function ExamplesPage() {
+  useSmoothScroll();
   const { category } = Route.useSearch();
   const navigate = useNavigate();
   const filtered = category

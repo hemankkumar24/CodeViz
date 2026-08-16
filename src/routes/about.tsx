@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { GlobalNav } from "@/components/layout/GlobalNav";
 import { Footer } from "@/components/layout/Footer";
 import { CvButton } from "@/components/ui/cv";
+import { useSmoothScroll } from "@/hooks/useSmoothScroll";
 
 export const Route = createFileRoute("/about")({
   head: () => ({
@@ -23,6 +24,8 @@ export const Route = createFileRoute("/about")({
 });
 
 function AboutPage() {
+  useSmoothScroll();
+
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <GlobalNav />

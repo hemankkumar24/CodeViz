@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { GlobalNav } from "@/components/layout/GlobalNav";
 import { Footer } from "@/components/layout/Footer";
 import { Pill } from "@/components/ui/cv";
+import { useSmoothScroll } from "@/hooks/useSmoothScroll";
 
 export const Route = createFileRoute("/learn")({
   head: () => ({
@@ -50,6 +51,8 @@ const articles = [
 ];
 
 function LearnPage() {
+  useSmoothScroll();
+
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <GlobalNav />
