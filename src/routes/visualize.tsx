@@ -168,18 +168,37 @@ function VisualizePage() {
         <aside
           className={cn(
             "flex-col gap-3 lg:w-[41%] lg:min-w-[420px] lg:h-full lg:min-h-0 lg:overflow-y-auto cv-scrollbar pr-0.5",
-            mobileTab === "code" ? "flex w-full h-full min-h-0 overflow-y-auto" : "hidden lg:flex",
+            mobileTab === "code" ? "flex w-full h-full min-h-0 overflow-y-auto pb-20 lg:pb-0" : "hidden lg:flex",
           )}
         >
           <section className="animate-panel-in glass overflow-hidden rounded-[16px] shrink-0">
-            <header className="flex flex-wrap items-center justify-between gap-2 border-b border-hairline px-3.5 py-2">
-              <input
-                value={title}
-                onChange={(e) => dispatch({ type: "setTitle", title: e.target.value })}
-                aria-label="Session title"
-                className="min-w-[120px] flex-1 bg-transparent text-[13px] sm:text-[13.5px] font-medium text-foreground outline-none"
-              />
-              <div className="flex shrink-0 items-center gap-1.5">
+            <header className="flex flex-col gap-2 border-b border-hairline px-3.5 py-2.5 sm:flex-row sm:items-center sm:justify-between sm:gap-2">
+              <div className="flex items-center justify-between gap-2">
+                <input
+                  value={title}
+                  onChange={(e) => dispatch({ type: "setTitle", title: e.target.value })}
+                  aria-label="Session title"
+                  className="min-w-[120px] flex-1 bg-transparent text-[13.5px] font-medium text-foreground outline-none"
+                />
+                {/* Mobile top Visualize button */}
+                <div className="sm:hidden">
+                  <CvButton
+                    size="sm"
+                    onClick={handleRun}
+                    disabled={!canRun}
+                    className="h-7 px-3 text-[11.5px] font-semibold shadow-sm"
+                  >
+                    {isExecuting ? (
+                      <Loader2 size={12} strokeWidth={2.5} className="animate-spin" />
+                    ) : (
+                      <Play size={12} strokeWidth={2.5} className="fill-current" />
+                    )}
+                    <span>{isExecuting ? "Running…" : "Visualize"}</span>
+                  </CvButton>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-1.5">
                 <button
                   type="button"
                   onClick={() => {
@@ -215,7 +234,7 @@ function VisualizePage() {
                       navigate({ to: "/visualize", search: { example: e.target.value } });
                     }
                   }}
-                  className="rounded-[7px] border border-hairline bg-surface-1 px-2 py-1 font-mono text-[11px] text-text-secondary outline-none transition-colors hover:text-foreground focus:border-primary/50"
+                  className="max-w-[140px] truncate rounded-[7px] border border-hairline bg-surface-1 px-2 py-1 font-mono text-[11px] text-text-secondary outline-none transition-colors hover:text-foreground focus:border-primary/50"
                 >
                   <option value="">Load example…</option>
                   <option value="__clear__">✨ Blank / Custom</option>
@@ -227,20 +246,22 @@ function VisualizePage() {
                   ))}
                 </select>
 
-                {/* Primary Visualize Action Button */}
-                <CvButton
-                  size="sm"
-                  onClick={handleRun}
-                  disabled={!canRun}
-                  className="h-7 px-3 text-[11.5px] font-semibold shadow-sm"
-                >
-                  {isExecuting ? (
-                    <Loader2 size={12} strokeWidth={2.5} className="animate-spin" />
-                  ) : (
-                    <Play size={12} strokeWidth={2.5} className="fill-current" />
-                  )}
-                  <span>{isExecuting ? "Running…" : "Visualize"}</span>
-                </CvButton>
+                {/* Desktop top Visualize button */}
+                <div className="hidden sm:block">
+                  <CvButton
+                    size="sm"
+                    onClick={handleRun}
+                    disabled={!canRun}
+                    className="h-7 px-3 text-[11.5px] font-semibold shadow-sm"
+                  >
+                    {isExecuting ? (
+                      <Loader2 size={12} strokeWidth={2.5} className="animate-spin" />
+                    ) : (
+                      <Play size={12} strokeWidth={2.5} className="fill-current" />
+                    )}
+                    <span>{isExecuting ? "Running…" : "Visualize"}</span>
+                  </CvButton>
+                </div>
               </div>
             </header>
 
@@ -344,6 +365,28 @@ function VisualizePage() {
           )}
         </aside>
       </div>
+
+      {/* Mobile Sticky Floating Visualize Bar (when on Code tab) */}
+      {mobileTab === "code" && (
+        <div className="fixed inset-x-0 bottom-2.5 z-40 flex items-center justify-center px-4 lg:hidden pointer-events-none">
+          <div className="pointer-events-auto glass-strong flex w-full max-w-md items-center justify-between gap-3 rounded-[16px] px-3.5 py-2 shadow-[0_8px_32px_rgba(0,0,0,0.35)] border border-primary/30">
+            <StatusHint />
+            <CvButton
+              size="sm"
+              onClick={handleRun}
+              disabled={!canRun}
+              className="h-8 px-4 text-[12.5px] font-semibold shadow-md shadow-primary/25"
+            >
+              {isExecuting ? (
+                <Loader2 size={13} strokeWidth={2.5} className="animate-spin" />
+              ) : (
+                <Play size={13} strokeWidth={2.5} className="fill-current" />
+              )}
+              <span>{isExecuting ? "Running…" : "Visualize"}</span>
+            </CvButton>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
