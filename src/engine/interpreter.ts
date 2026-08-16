@@ -73,7 +73,7 @@ export class Interpreter {
       this.collectFunctions(ast);
 
       // 2. Find the entry function
-      const entryName = config.entryFunction ?? this.findEntryFunction();
+      const entryName = config.entryFunction ?? this.findEntryFunction(config.args);
 
       // 3. Execute top-level declarations (registering classes, globals, functions)
       this.executeTopLevel(ast);
@@ -156,17 +156,42 @@ export class Interpreter {
     }
   }
 
-  private findEntryFunction(): string | undefined {
+  private findEntryFunction(args?: Record<string, unknown>): string | undefined {
+    if (this.userFunctions.size === 0) return undefined;
     if (this.userFunctions.size === 1) {
       return this.userFunctions.keys().next().value;
     }
-    // Prefer non-helper names
-    for (const name of this.userFunctions.keys()) {
-      if (!name.startsWith("_") && !name.startsWith("#") && !name.toLowerCase().includes("util") && name !== "helper") {
+
+    const fnNames = Array.from(this.userFunctions.keys());
+
+    // 1. If args are provided, find function whose parameter names match the args keys exactly
+    if (args && Object.keys(args).length > 0) {
+      const argKeys = Object.keys(args);
+      for (const name of fnNames) {
+        const fn = this.userFunctions.get(name)!;
+        const paramNames = fn.params.map((p) => (p.type === "Identifier" ? p.name : ""));
+        const matchCount = argKeys.filter((k) => paramNames.includes(k)).length;
+        if (matchCount === argKeys.length && paramNames.length === argKeys.length) {
+          return name;
+        }
+      }
+    }
+
+    // 2. In C++/Java, the main entry point is defined LAST after its helper functions
+    for (let i = fnNames.length - 1; i >= 0; i--) {
+      const name = fnNames[i]!;
+      if (
+        !name.startsWith("_") &&
+        !name.startsWith("#") &&
+        !name.toLowerCase().includes("util") &&
+        !name.toLowerCase().includes("helper") &&
+        name !== "helper"
+      ) {
         return name;
       }
     }
-    return this.userFunctions.keys().next().value;
+
+    return fnNames[fnNames.length - 1];
   }
 
   private executeTopLevel(ast: ESTree.Program): void {
