@@ -48,17 +48,31 @@ export function detectCodeLanguage(code: string): SupportedLanguage {
   return "cpp";
 }
 
+function normalizeCode(code: string): string {
+  return code
+    .replace(/[⩾≥]/g, ">=")
+    .replace(/[⩽≤]/g, "<=")
+    .replace(/[≠]/g, "!=")
+    .replace(/[×]/g, "*")
+    .replace(/[÷]/g, "/")
+    .replace(/[−–—]/g, "-")
+    .replace(/[“”]/g, '"')
+    .replace(/[‘’]/g, "'")
+    .replace(/[\u00A0\u200B\u200C\u200D\uFEFF]/g, " ");
+}
+
 export function transpileToJS(code: string, language: SupportedLanguage): string {
+  const normalized = normalizeCode(code);
   // If language looks like Java/C++, use appropriate transpiler
-  const detected = detectCodeLanguage(code);
+  const detected = detectCodeLanguage(normalized);
   const effectiveLang = (detected === "java" && language !== "java") || (detected === "cpp" && language !== "cpp")
     ? detected
     : language;
 
   if (effectiveLang === "java") {
-    return transpileJava(code);
+    return transpileJava(normalized);
   }
-  return transpileCpp(code);
+  return transpileCpp(normalized);
 }
 
 /* ============================== Java → JS ================================ */
@@ -222,10 +236,14 @@ function transpileJava(code: string): string {
     // 11. Standard for loop: for (int i = 0; ...)
     line = line.replace(/for\s*\(\s*(?:int|long|double|var)\s+/g, "for (let ");
 
-    // 12. Variable declarations: int currentSum = nums[0], maxSum = nums[0];
+    // 12. Variable declarations (both single and multiple on the same line)
     line = line.replace(
-      /^\s*(?:final\s+)?(?:int|long|double|float|boolean|char|String|var|Integer|Long|Double|Boolean|ListNode|TreeNode|StringBuilder)\s+([^;]+);/,
-      "let $1;",
+      /(^|[;{}(,\s])\b(?:final\s+)?(?:int|long|double|float|boolean|char|String|var|Integer|Long|Double|Boolean|ListNode|TreeNode|StringBuilder)\s+([A-Za-z_]\w*)/g,
+      (match, prefix, varName) => {
+        if (prefix === "(" || prefix === ",") return match;
+        if (["return", "new", "class", "struct", "interface", "if", "while", "for", "switch", "case"].includes(varName)) return match;
+        return `${prefix}let ${varName}`;
+      },
     );
 
     // 13. Integer mid calculation: left + (right - left) / 2 -> Math.floor(...)
@@ -417,10 +435,14 @@ function transpileCpp(code: string): string {
       line = line.replace(/auto\s*\[(.*?)\]\s*=\s*(.+?);/, "let [$1] = $2;");
     }
 
-    // 12. Variable declarations: int currentSum = nums[0], maxSum = nums[0];
+    // 12. Variable declarations (both single and multiple on the same line, e.g. int i1 = 0; int j1 = 0;)
     line = line.replace(
-      /^\s*(?:int|long\s+long|long|double|float|bool|char|string|auto|size_t|pair<[^>]+>|TreeNode\*?|ListNode\*?)\s+([^;]+);/,
-      "let $1;",
+      /(^|[;{}(,\s])\b(?:const\s+)?(?:int|long\s+long|long|double|float|bool|char|string|auto|size_t|pair<[^>]+>|TreeNode\*?|ListNode\*?)\s+([A-Za-z_]\w*)/g,
+      (match, prefix, varName) => {
+        if (prefix === "(" || prefix === ",") return match;
+        if (["return", "new", "class", "struct", "sizeof", "if", "while", "for", "switch", "case"].includes(varName)) return match;
+        return `${prefix}let ${varName}`;
+      },
     );
 
     // 13. For loops: for (int i = 1; i < nums.size(); i++)
