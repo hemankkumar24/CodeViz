@@ -534,27 +534,18 @@ function transpileVectorDeclaration(line: string): string | null {
 function parseCppFunctionHeader(line: string): { name: string; params: string } | null {
   const trimmed = line.trim();
   if (/^(?:if|while|for|switch|catch|return)\b/.test(trimmed)) return null;
+  if (trimmed.includes("=") && !trimmed.endsWith("{") && !trimmed.endsWith(")")) return null;
+  if (/[+\-*/%&|^]=/.test(trimmed)) return null;
 
-  const openParen = trimmed.indexOf("(");
-  if (openParen === -1) return null;
+  const fnRegex = /^\s*(?:(?:inline|static|virtual|const|explicit|friend|public|private|protected)\s+)*(?:(?:(?:std::)?(?:vector|pair|tuple|unordered_set|set|unordered_map|map|queue|priority_queue|deque|stack)\s*<[\s\S]*>)|(?:(?:unsigned\s+)?(?:int|long\s+long|long|short|char|size_t))|void|bool|double|float|string|auto)\s*(?:[&*]\s*)*([A-Za-z_]\w*)\s*\(([\s\S]*)\)\s*(?:const)?\s*(?:override)?\s*\{?$/;
 
-  const prefix = trimmed.slice(0, openParen).trim();
-  const rest = trimmed.slice(openParen);
-  const closeParen = rest.lastIndexOf(")");
-  if (closeParen === -1) return null;
+  const match = fnRegex.exec(trimmed);
+  if (!match) return null;
 
-  const params = rest.slice(1, closeParen);
-
-  const nameMatch = /([A-Za-z_]\w*)$/.exec(prefix);
-  if (!nameMatch) return null;
-
-  const name = nameMatch[1]!;
-  if (["if", "while", "for", "switch", "catch", "return", "class", "struct"].includes(name)) {
+  const name = match[1]!;
+  if (["if", "while", "for", "switch", "catch", "return", "class", "struct", "sizeof"].includes(name)) {
     return null;
   }
 
-  const returnTypePart = prefix.slice(0, prefix.length - name.length).trim();
-  if (!returnTypePart) return null;
-
-  return { name, params };
+  return { name, params: match[2]! };
 }
