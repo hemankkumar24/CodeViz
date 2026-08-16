@@ -66,12 +66,12 @@ export function CodeEditor({
 
         <div className="relative min-w-0 flex-1 py-3 pl-3 pr-4">
           {/* highlight layer */}
-          <div aria-hidden className="pointer-events-none absolute inset-0 py-3 pl-3 pr-4">
+          <div aria-hidden className="pointer-events-none absolute inset-0 py-3 pl-3 pr-4 overflow-hidden select-none">
             {lines.map((line, i) => (
               <div
                 key={i}
                 className={cn(
-                  "-mx-3 whitespace-pre px-3 transition-colors",
+                  "-mx-3 whitespace-pre px-3 transition-colors h-[22px] leading-[22px]",
                   i + 1 === activeLine && "cv-active-line",
                   i + 1 === errorLine && "cv-error-line",
                 )}
@@ -84,10 +84,14 @@ export function CodeEditor({
             ref={taRef}
             value={value}
             readOnly={readOnly}
+            wrap="off"
             spellCheck={false}
+            autoCapitalize="off"
+            autoComplete="off"
+            autoCorrect="off"
             onChange={(e) => onChange(e.target.value)}
             aria-label="Code editor"
-            className="relative block w-full resize-none bg-transparent font-mono text-[13px] leading-[22px] text-transparent caret-primary outline-none selection:bg-primary/25"
+            className="relative block w-full resize-none overflow-hidden whitespace-pre bg-transparent font-mono text-[13px] leading-[22px] text-transparent caret-primary outline-none selection:bg-primary/25 border-0 p-0 m-0"
             style={{ height: Math.max(lines.length, 14) * 22 }}
           />
         </div>

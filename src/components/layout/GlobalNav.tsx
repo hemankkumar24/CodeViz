@@ -103,14 +103,15 @@ export function GlobalNav() {
       </div>
 
       {open ? (
-        <div className="glass animate-panel-in border-t border-hairline px-4 pb-4 pt-2 md:hidden">
-          <nav className="flex flex-col">
+        <div className="absolute top-full inset-x-0 z-50 animate-panel-in border-b border-hairline bg-surface-1/85 backdrop-blur-2xl px-4 pb-5 pt-3 shadow-[0_20px_50px_rgba(0,0,0,0.45)] md:hidden">
+          <nav className="flex flex-col gap-1">
             {[...links, { to: "/about", label: "About" } as const].map((l) => (
               <Link
                 key={l.to}
                 to={l.to}
-                className="rounded-[9px] px-3 py-2.5 text-[14px] text-text-secondary hover:bg-surface-2/60 hover:text-foreground"
-                activeProps={{ className: "text-foreground" }}
+                onClick={() => setOpen(false)}
+                className="rounded-[10px] px-3.5 py-2.5 text-[14.5px] font-medium text-text-secondary transition-colors hover:bg-surface-2/70 hover:text-foreground"
+                activeProps={{ className: "text-foreground bg-surface-2/80 font-semibold" }}
               >
                 {l.label}
               </Link>
@@ -118,17 +119,17 @@ export function GlobalNav() {
             <button
               type="button"
               onClick={toggleTheme}
-              className="flex items-center justify-between rounded-[9px] px-3 py-2.5 text-[14px] text-text-secondary hover:bg-surface-2/60 hover:text-foreground"
+              className="flex items-center justify-between rounded-[10px] px-3.5 py-2.5 text-[14.5px] font-medium text-text-secondary transition-colors hover:bg-surface-2/70 hover:text-foreground"
             >
               <span>Appearance</span>
-              <span className="flex items-center gap-1.5 text-xs text-text-tertiary">
-                {isDark ? <Moon size={14} /> : <Sun size={14} className="text-amber-500" />}
-                {isDark ? "Dark" : "Light"}
+              <span className="flex items-center gap-1.5 rounded-full border border-hairline bg-surface-2 px-2.5 py-1 text-xs text-text-secondary">
+                {isDark ? <Moon size={13} /> : <Sun size={13} className="text-amber-500" />}
+                <span>{isDark ? "Dark" : "Light"}</span>
               </span>
             </button>
           </nav>
           {!inWorkspace ? (
-            <Link to="/visualize" className="mt-3 block">
+            <Link to="/visualize" onClick={() => setOpen(false)} className="mt-3.5 block">
               <CvButton variant="primary" className="w-full">
                 Start Visualizing
               </CvButton>
