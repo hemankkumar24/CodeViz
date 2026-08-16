@@ -6,7 +6,32 @@ import * as acorn from "acorn";
 import type * as ESTree from "estree";
 import { Scope, createGlobalScope, clearCapturedLogs, getCapturedLogs } from "./scope";
 import { Tracer, type StepContext, generateExplanation, deepClone } from "./tracer";
+import { sanitizeCodeForParsing } from "./transpiler";
 import type { ExecutionEvent, CallFrame } from "@/types/execution";
+
+function parseAstWithRecovery(code: string): { ast: ESTree.Program; code: string } {
+  try {
+    const ast = acorn.parse(code, {
+      ecmaVersion: 2022,
+      sourceType: "script",
+      locations: true,
+    }) as unknown as ESTree.Program;
+    return { ast, code };
+  } catch (initialErr) {
+    // Self-healing sanitization pass
+    const sanitized = sanitizeCodeForParsing(code);
+    try {
+      const ast = acorn.parse(sanitized, {
+        ecmaVersion: 2022,
+        sourceType: "script",
+        locations: true,
+      }) as unknown as ESTree.Program;
+      return { ast, code: sanitized };
+    } catch {
+      throw initialErr;
+    }
+  }
+}
 
 /* ----------------------------- Config ------------------------------------ */
 
@@ -63,11 +88,8 @@ export class Interpreter {
     const startTime = Date.now();
 
     try {
-      const ast = acorn.parse(this.code, {
-        ecmaVersion: 2022,
-        sourceType: "script",
-        locations: true,
-      }) as unknown as ESTree.Program;
+      const { ast, code: parsedCode } = parseAstWithRecovery(this.code);
+      this.code = parsedCode;
 
       // 1. Collect all functions and class methods
       this.collectFunctions(ast);

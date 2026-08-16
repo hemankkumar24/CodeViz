@@ -48,6 +48,31 @@ export function detectCodeLanguage(code: string): SupportedLanguage {
   return "cpp";
 }
 
+export function sanitizeCodeForParsing(code: string): string {
+  return code
+    .replace(/[⩾≥]/g, ">=")
+    .replace(/[⩽≤]/g, "<=")
+    .replace(/[≠]/g, "!=")
+    .replace(/[×]/g, "*")
+    .replace(/[÷]/g, "/")
+    .replace(/[−–—]/g, "-")
+    .replace(/[“”]/g, '"')
+    .replace(/[‘’]/g, "'")
+    .replace(/[\u00A0\u200B\u200C\u200D\uFEFF]/g, " ")
+    .replace(/\(int\)\s*(\w+)/g, "Math.trunc($1)")
+    .replace(/\(double\)\s*(\w+)/g, "Number($1)")
+    .replace(/\(float\)\s*(\w+)/g, "Number($1)")
+    .replace(/\(char\)\s*(\w+)/g, "String.fromCharCode($1)")
+    .replace(/\(long\s+long\)\s*(\w+)/g, "Math.trunc($1)")
+    .replace(/\(long\)\s*(\w+)/g, "Math.trunc($1)")
+    .replace(/(^|[;{}(,\s])\b(?:const\s+|final\s+)?(?:int|long\s+long|long|double|float|bool|boolean|char|string|String|auto|size_t|pair<[^>]+>|TreeNode\*?|ListNode\*?)\s+([A-Za-z_]\w*)/g, (match, prefix, varName) => {
+      if (prefix === "(" || prefix === ",") return match;
+      if (["return", "new", "class", "struct", "sizeof", "if", "while", "for", "switch", "case"].includes(varName)) return match;
+      return `${prefix}let ${varName}`;
+    })
+    .replace(/(\w+)->(\w+)/g, "$1.$2");
+}
+
 function normalizeCode(code: string): string {
   return code
     .replace(/[⩾≥]/g, ">=")
@@ -114,12 +139,12 @@ function transpileJava(code: string): string {
     const methodHeader = parseJavaMethodHeader(line);
     if (methodHeader) {
       const cleanedParams = cleanJavaParams(methodHeader.params);
-      if (inClass) {
-        result.push(`    ${methodHeader.name}(${cleanedParams}) {`);
-      } else {
-        result.push(`function ${methodHeader.name}(${cleanedParams}) {`);
+      const prefix = inClass ? `    ${methodHeader.name}(${cleanedParams}) {` : `function ${methodHeader.name}(${cleanedParams}) {`;
+      line = line.replace(methodHeader.fullMatch, prefix);
+      if (line.trim().endsWith("{")) {
+        result.push(line);
+        continue;
       }
-      continue;
     }
 
     // 4. Return new expressions
@@ -283,15 +308,16 @@ function cleanJavaParams(params: string): string {
   }).join(", ");
 }
 
-function parseJavaMethodHeader(line: string): { name: string; params: string } | null {
+function parseJavaMethodHeader(line: string): { name: string; params: string; fullMatch: string } | null {
   const trimmed = line.trim();
   if (/^(?:if|while|for|switch|catch|return)\b/.test(trimmed)) return null;
-  if (trimmed.includes("=") && !trimmed.endsWith("{") && !trimmed.endsWith(")")) return null;
+  if (trimmed.includes("=") && !trimmed.includes("{")) return null;
+  if (trimmed.endsWith(";") && !trimmed.includes("{")) return null;
   if (/[+\-*/%&|^]=/.test(trimmed)) return null;
 
-  const fnRegex = /^\s*(?:(?:public|private|protected)\s+)?(?:static\s+)?(?:final\s+)?(?:(?:int|long|double|float|boolean|char|byte|short|void|String|Integer|Long|Double|Boolean|Object|ListNode|TreeNode|StringBuilder|(?:List|ArrayList|Set|HashSet|Map|HashMap|Queue|Deque|Stack|PriorityQueue)\s*<[\s\S]*>|int\[\](?:\s*\[\])*|long\[\](?:\s*\[\])*|double\[\](?:\s*\[\])*|boolean\[\](?:\s*\[\])*|String\[\](?:\s*\[\])*))\s+([A-Za-z_]\w*)\s*\(([\s\S]*)\)\s*(?:throws\s+[\w,\s]+)?\s*\{?$/;
+  const fnRegex = /^\s*(?:(?:public|private|protected)\s+)?(?:static\s+)?(?:final\s+)?(?:(?:int|long|double|float|boolean|char|byte|short|void|String|Integer|Long|Double|Boolean|Object|ListNode|TreeNode|StringBuilder|(?:List|ArrayList|Set|HashSet|Map|HashMap|Queue|Deque|Stack|PriorityQueue)\s*<[\s\S]*?>)|int\[\](?:\s*\[\])*|long\[\](?:\s*\[\])*|double\[\](?:\s*\[\])*|boolean\[\](?:\s*\[\])*|String\[\](?:\s*\[\])*)\s+([A-Za-z_]\w*)\s*\(([\s\S]*?)\)\s*(?:throws\s+[\w,\s]+)?\s*\{?/;
 
-  const match = fnRegex.exec(trimmed);
+  const match = fnRegex.exec(line);
   if (!match) return null;
 
   const name = match[1]!;
@@ -299,7 +325,7 @@ function parseJavaMethodHeader(line: string): { name: string; params: string } |
     return null;
   }
 
-  return { name, params: match[2]! };
+  return { name, params: match[2]!, fullMatch: match[0] };
 }
 
 /* ============================== C++ → JS ================================= */
@@ -313,12 +339,14 @@ function transpileCpp(code: string): string {
     let line = lines[i]!;
     const trimmed = line.trim();
 
-    // 1. Includes and namespaces
+    // 1. Includes, namespaces, and macros
     if (
       trimmed.startsWith("#include") ||
       trimmed.startsWith("using namespace") ||
       trimmed.startsWith("using std::") ||
-      trimmed.startsWith("#pragma")
+      trimmed.startsWith("#pragma") ||
+      trimmed.startsWith("#define") ||
+      trimmed.startsWith("typedef ")
     ) {
       result.push("");
       continue;
@@ -347,24 +375,32 @@ function transpileCpp(code: string): string {
     line = line.replace(/\bnullptr\b/g, "null");
     line = line.replace(/\bNULL\b/g, "null");
 
-    // 4. Function or Method header (runs before variable declarations so functions returning vectors/pointers are parsed as functions)
+    // 4. Type casts: (int)x, (double)x, (char)x, (long)x
+    line = line.replace(/\(int\)\s*(\w+)/g, "Math.trunc($1)");
+    line = line.replace(/\(double\)\s*(\w+)/g, "Number($1)");
+    line = line.replace(/\(float\)\s*(\w+)/g, "Number($1)");
+    line = line.replace(/\(char\)\s*(\w+)/g, "String.fromCharCode($1)");
+    line = line.replace(/\(long\s+long\)\s*(\w+)/g, "Math.trunc($1)");
+    line = line.replace(/\(long\)\s*(\w+)/g, "Math.trunc($1)");
+
+    // 5. Function or Method header (runs before variable declarations so functions returning vectors/pointers are parsed as functions)
     const fnHeader = parseCppFunctionHeader(line);
     if (fnHeader) {
       const cleanedParams = cleanCppParams(fnHeader.params);
-      if (inClass) {
-        result.push(`    ${fnHeader.name}(${cleanedParams}) {`);
-      } else {
-        result.push(`function ${fnHeader.name}(${cleanedParams}) {`);
+      const prefix = inClass ? `    ${fnHeader.name}(${cleanedParams}) {` : `function ${fnHeader.name}(${cleanedParams}) {`;
+      line = line.replace(fnHeader.fullMatch, prefix);
+      if (line.trim().endsWith("{")) {
+        result.push(line);
+        continue;
       }
-      continue;
     }
 
-    // 5. Return with curly initializer list: return {mid, steps}; or return {-1, steps}; return {};
+    // 6. Return with curly initializer list: return {mid, steps}; or return {-1, steps}; return {};
     if (/return\s*\{([^}]*)\};/.test(line)) {
       line = line.replace(/return\s*\{([^}]*)\};/, "return [$1];");
     }
 
-    // 6. Any N-dimensional vector declaration (1D, 2D, 3D, 4D, etc. with or without constructor args)
+    // 7. Any N-dimensional vector declaration (1D, 2D, 3D, 4D, etc. with or without constructor args)
     if (trimmed.startsWith("vector<") || /^\s*vector\s*</.test(line)) {
       const transpiledVec = transpileVectorDeclaration(line);
       if (transpiledVec) {
@@ -374,20 +410,24 @@ function transpileCpp(code: string): string {
       }
     }
 
-    // 7. Initializer list vector / set: vector<int> queue = {start}; or unordered_set<int> seen = {start};
-    if (/(?:vector\s*<[\s\S]*>|unordered_set\s*<[\s\S]*>|set\s*<[\s\S]*>|unordered_map\s*<[\s\S]*>|map\s*<[\s\S]*>|pair\s*<[\s\S]*>)\s+(\w+)\s*=\s*\{([^}]+)\};/.test(line)) {
+    // 8. Initializer list vector / set / matrix: vector<int> queue = {start}; or vector<vector<int>> matrix = {{1, 2}, {3, 4}};
+    if (/(?:vector\s*<[\s\S]*>|unordered_set\s*<[\s\S]*>|set\s*<[\s\S]*>|unordered_map\s*<[\s\S]*>|map\s*<[\s\S]*>|pair\s*<[\s\S]*>)\s+(\w+)\s*=\s*\{([^;]+)\};/.test(line)) {
       if (line.includes("unordered_set") || line.includes("set<")) {
-        line = line.replace(/(?:unordered_set\s*<[\s\S]*>|set\s*<[\s\S]*>)\s+(\w+)\s*=\s*\{([^}]+)\};/, "let $1 = new Set([$2]);");
+        line = line.replace(/(?:unordered_set\s*<[\s\S]*>|set\s*<[\s\S]*>)\s+(\w+)\s*=\s*\{([^;]+)\};/, "let $1 = new Set([$2]);");
       } else if (line.includes("map")) {
-        line = line.replace(/(?:unordered_map\s*<[\s\S]*>|map\s*<[\s\S]*>)\s+(\w+)\s*=\s*\{([^}]+)\};/, "let $1 = new UnorderedMap([$2]);");
+        line = line.replace(/(?:unordered_map\s*<[\s\S]*>|map\s*<[\s\S]*>)\s+(\w+)\s*=\s*\{([^;]+)\};/, "let $1 = new UnorderedMap([$2]);");
       } else {
-        line = line.replace(/(?:vector\s*<[\s\S]*>|pair\s*<[\s\S]*>)\s+(\w+)\s*=\s*\{([^}]+)\};/, "let $1 = [$2];");
+        let cleanInit = line.replace(/(?:vector\s*<[\s\S]*>|pair\s*<[\s\S]*>)\s+(\w+)\s*=\s*\{([^;]+)\};/, (_, name, body) => {
+          let jsBody = body.replace(/\{/g, "[").replace(/\}/g, "]");
+          return `let ${name} = [${jsBody}];`;
+        });
+        line = cleanInit;
       }
       result.push(line);
       continue;
     }
 
-    // 8. Empty containers: queue, stack, deque, unordered_set, set, unordered_map, map, priority_queue
+    // 9. Empty containers: queue, stack, deque, unordered_set, set, unordered_map, map, priority_queue
     if (/(?:queue|stack|deque|priority_queue)\s*<[\s\S]*>\s+(\w+);/.test(line)) {
       line = line.replace(/(?:queue|stack|deque|priority_queue)\s*<[\s\S]*>\s+(\w+);/, "let $1 = [];");
       result.push(line);
@@ -404,7 +444,7 @@ function transpileCpp(code: string): string {
       continue;
     }
 
-    // 9. C-style 1D / 2D arrays: int dp[n + 1]; or int dp[n + 1][m + 1];
+    // 10. C-style 1D / 2D arrays: int dp[n + 1]; or int dp[n + 1][m + 1];
     if (/^\s*(?:int|bool|double|float|long|long\s+long)\s+(\w+)\s*\[(.+?)\]\s*\[(.+?)\];/.test(line)) {
       line = line.replace(
         /^\s*(?:int|bool|double|float|long|long\s+long)\s+(\w+)\s*\[(.+?)\]\s*\[(.+?)\];/,
@@ -422,20 +462,25 @@ function transpileCpp(code: string): string {
       continue;
     }
 
-    // 10. Range-based for loop: for (int nxt : graph[node])
-    if (/for\s*\(\s*(?:int|long\s+long|long|auto|const\s+auto&?)\s+(\w+)\s*:\s*(.+?)\)/.test(line)) {
+    // 11. Range-based for loops (handles auto, const auto&, auto [u, v], int x)
+    if (/for\s*\(\s*(?:int|long\s+long|long|auto|const\s+auto&?)\s+\[(.*?)\]\s*:\s*(.+?)\)/.test(line)) {
       line = line.replace(
-        /for\s*\(\s*(?:int|long\s+long|long|auto|const\s+auto&?)\s+(\w+)\s*:\s*(.+?)\)/,
+        /for\s*\(\s*(?:int|long\s+long|long|auto|const\s+auto&?)\s+\[(.*?)\]\s*:\s*(.+?)\)/,
+        "for (const [$1] of $2)",
+      );
+    } else if (/for\s*\(\s*(?:int|long\s+long|long|auto|const\s+auto&?|pair<[^>]+>|TreeNode\*?|ListNode\*?)\s+(\w+)\s*:\s*(.+?)\)/.test(line)) {
+      line = line.replace(
+        /for\s*\(\s*(?:int|long\s+long|long|auto|const\s+auto&?|pair<[^>]+>|TreeNode\*?|ListNode\*?)\s+(\w+)\s*:\s*(.+?)\)/,
         "for (const $1 of $2)",
       );
     }
 
-    // 11. Structured bindings: auto [u, v] = edge;
+    // 12. Structured bindings: auto [u, v] = edge;
     if (/auto\s*\[(.*?)\]\s*=\s*(.+?);/.test(line)) {
       line = line.replace(/auto\s*\[(.*?)\]\s*=\s*(.+?);/, "let [$1] = $2;");
     }
 
-    // 12. Variable declarations (both single and multiple on the same line, e.g. int i1 = 0; int j1 = 0;)
+    // 13. Variable declarations (both single and multiple on the same line, e.g. int i1 = 0; int j1 = 0;)
     line = line.replace(
       /(^|[;{}(,\s])\b(?:const\s+)?(?:int|long\s+long|long|double|float|bool|char|string|auto|size_t|pair<[^>]+>|TreeNode\*?|ListNode\*?)\s+([A-Za-z_]\w*)/g,
       (match, prefix, varName) => {
@@ -445,18 +490,18 @@ function transpileCpp(code: string): string {
       },
     );
 
-    // 13. For loops: for (int i = 1; i < nums.size(); i++)
+    // 14. For loops: for (int i = 1; i < nums.size(); i++)
     line = line.replace(/for\s*\(\s*(?:int|long\s+long|long|size_t|auto)\s+/g, "for (let ");
 
-    // 14. Integer mid calculation: (left + right) / 2 -> Math.floor((left + right) / 2)
+    // 15. Integer mid calculation: (left + right) / 2 -> Math.floor((left + right) / 2)
     line = line.replace(/=\s*\((\w+\s*[+\-]\s*\w+)\)\s*\/\s*2;/g, "= Math.floor(($1) / 2);");
-    line = line.replace(/=\s*(\w+\s*-\s*\w+)\s*\/\s*2;/g, "= Math.floor(($1) / 2);");
+    line = line.replace(/=\s*(\w+\s*-\s*\w+)\)\s*\/\s*2;/g, "= Math.floor(($1) / 2);");
     line = line.replace(/=\s*(\w+)\s*\+\s*\((\w+\s*-\s*\w+)\)\s*\/\s*2;/g, "= $1 + Math.floor(($2) / 2);");
 
-    // 15. Return vector conversion: return vector<int>(seen.begin(), seen.end());
+    // 16. Return vector conversion: return vector<int>(seen.begin(), seen.end());
     line = line.replace(/return\s+vector<[\s\S]*>\((\w+)\.begin\(\),\s*\1\.end\(\)\);/g, "return Array.from($1);");
 
-    // 16. Standard C++ STL method replacements
+    // 17. Standard C++ STL method replacements
     line = line.replace(/\.size\(\)/g, ".length");
     line = line.replace(/\.length\(\)/g, ".length");
     line = line.replace(/\.push_back\(/g, ".push(");
@@ -478,9 +523,9 @@ function transpileCpp(code: string): string {
       line = line.replace(/cout\s*<<\s*(.+?);/g, "console.log($1);");
     }
 
-    // swap(nums[i], nums[j]) or std::swap(...) or swap(a, b)
+    // swap(nums[i], nums[j]) or std::swap(...) or swap(a, b) -> safe destructuring with leading semicolon
     if (/(?:std::)?swap\s*\((.+?),\s*(.+?)\);/.test(line)) {
-      line = line.replace(/(?:std::)?swap\s*\((.+?),\s*(.+?)\);/, "[$1, $2] = [$2, $1];");
+      line = line.replace(/(?:std::)?swap\s*\((.+?),\s*(.+?)\);/, ";[$1, $2] = [$2, $1];");
     }
 
     // max / min / abs
@@ -548,6 +593,7 @@ function parseVectorCall(str: string): { type: string; name?: string | undefined
       }
     }
   }
+
   if (angleEnd === -1) return null;
 
   const type = trimmed.substring(0, angleEnd + 1);
@@ -610,15 +656,16 @@ function transpileVectorDeclaration(line: string): string | null {
   return `let ${parsed.name} = new Array(${dim}).fill(${second});`;
 }
 
-function parseCppFunctionHeader(line: string): { name: string; params: string } | null {
+function parseCppFunctionHeader(line: string): { name: string; params: string; fullMatch: string } | null {
   const trimmed = line.trim();
   if (/^(?:if|while|for|switch|catch|return)\b/.test(trimmed)) return null;
-  if (trimmed.includes("=") && !trimmed.endsWith("{") && !trimmed.endsWith(")")) return null;
+  if (trimmed.includes("=") && !trimmed.includes("{")) return null;
+  if (trimmed.endsWith(";") && !trimmed.includes("{")) return null;
   if (/[+\-*/%&|^]=/.test(trimmed)) return null;
 
-  const fnRegex = /^\s*(?:(?:inline|static|virtual|const|explicit|friend|public|private|protected)\s+)*(?:(?:(?:std::)?(?:vector|pair|tuple|unordered_set|set|unordered_map|map|queue|priority_queue|deque|stack)\s*<[\s\S]*>)|(?:(?:unsigned\s+)?(?:int|long\s+long|long|short|char|size_t))|void|bool|double|float|string|auto|ListNode|TreeNode|Node|Point|[A-Z]\w*)\s*(?:[&*]\s*)*([A-Za-z_]\w*)\s*\(([\s\S]*)\)\s*(?:const)?\s*(?:override)?\s*\{?$/;
+  const fnRegex = /^\s*(?:(?:inline|static|virtual|const|explicit|friend|public|private|protected)\s+)*(?:(?:(?:std::)?(?:vector|pair|tuple|unordered_set|set|unordered_map|map|queue|priority_queue|deque|stack)\s*<[\s\S]*?>)|(?:(?:unsigned\s+)?(?:int|long\s+long|long|short|char|size_t))|void|bool|double|float|string|auto|ListNode|TreeNode|Node|Point|[A-Z]\w*)\s*(?:[&*]\s*)*([A-Za-z_]\w*)\s*\(([\s\S]*?)\)\s*(?:const)?\s*(?:override)?\s*\{?/;
 
-  const match = fnRegex.exec(trimmed);
+  const match = fnRegex.exec(line);
   if (!match) return null;
 
   const name = match[1]!;
@@ -626,5 +673,5 @@ function parseCppFunctionHeader(line: string): { name: string; params: string } 
     return null;
   }
 
-  return { name, params: match[2]! };
+  return { name, params: match[2]!, fullMatch: match[0] };
 }
