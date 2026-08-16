@@ -8,6 +8,10 @@ import { VizTypes } from "@/components/landing/VizTypes";
 import { Comparison } from "@/components/landing/Comparison";
 import { CallToAction } from "@/components/landing/CallToAction";
 
+import { useEffect } from "react";
+import Lenis from "lenis";
+import "lenis/dist/lenis.css";
+
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
@@ -28,6 +32,31 @@ export const Route = createFileRoute("/")({
 });
 
 function Index() {
+  useEffect(() => {
+    const lenis = new Lenis({
+      duration: 1.2,
+      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+      orientation: "vertical",
+      gestureOrientation: "vertical",
+      smoothWheel: true,
+      wheelMultiplier: 1,
+      touchMultiplier: 1.8,
+    });
+
+    let rafId: number;
+    function raf(time: number) {
+      lenis.raf(time);
+      rafId = requestAnimationFrame(raf);
+    }
+
+    rafId = requestAnimationFrame(raf);
+
+    return () => {
+      cancelAnimationFrame(rafId);
+      lenis.destroy();
+    };
+  }, []);
+
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <GlobalNav />
