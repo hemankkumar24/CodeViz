@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="32" height="32" fill="none">
+  <!-- Left code chevron -->
+  <path
+    d="M8.5 7L3.5 12L8.5 17"
+    stroke="#4C8CFF"
+    stroke-width="2.2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+  <!-- Step 1 bar -->
+  <path
+    d="M13 14V17"
+    stroke="#4C8CFF"
+    stroke-width="2.2"
+    stroke-linecap="round"
+    opacity="0.6"
+  />
+  <!-- Step 2 bar (taller) -->
+  <path
+    d="M16.5 10V17"
+    stroke="#4C8CFF"
+    stroke-width="2.2"
+    stroke-linecap="round"
+    opacity="0.85"
+  />
+  <!-- Step 3 bar / right bracket node -->
+  <path
+    d="M20 6.5V17"
+    stroke="#4C8CFF"
+    stroke-width="2.2"
+    stroke-linecap="round"
+  />
+  <!-- Top pulse dot -->
+  <circle cx="20" cy="4.5" r="1.5" fill="#4C8CFF" />
+</svg>

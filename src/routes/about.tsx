@@ -7,13 +7,13 @@ import { useSmoothScroll } from "@/hooks/useSmoothScroll";
 export const Route = createFileRoute("/about")({
   head: () => ({
     meta: [
-      { title: "About CodeViz" },
+      { title: "CodeViz" },
       {
         name: "description",
         content:
           "CodeViz turns algorithm code into a stepped, visual trace so you can see state change instead of imagining it.",
       },
-      { property: "og:title", content: "About CodeViz" },
+      { property: "og:title", content: "CodeViz" },
       {
         property: "og:description",
         content: "Why we built a visual debugger for algorithms, and what runs under the hood.",
