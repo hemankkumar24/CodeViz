@@ -1,6 +1,6 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Github, Menu, Moon, Sun, User, X } from "lucide-react";
+import { Github, Menu, Moon, Sun, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CvButton } from "@/components/ui/cv";
 import { useTheme } from "@/hooks/useTheme";
@@ -36,7 +36,7 @@ export function GlobalNav() {
       )}
     >
       <div className="mx-auto flex h-14 w-full max-w-[1400px] items-center gap-6 px-4 sm:px-6">
-        <Link to="/" aria-label="CodeViz home">
+        <Link to="/" aria-label="VizCode home">
           <Logo />
         </Link>
 
@@ -68,7 +68,7 @@ export function GlobalNav() {
             )}
           </button>
           <a
-            href="https://github.com/hemankkumar24/CodeViz"
+            href="https://github.com/hemankkumar24/VizCode"
             target="_blank"
             rel="noreferrer"
             className="hidden h-9 w-9 items-center justify-center rounded-[9px] text-text-tertiary transition-colors hover:bg-surface-2/70 hover:text-foreground sm:inline-flex"
@@ -76,12 +76,6 @@ export function GlobalNav() {
           >
             <Github size={16} strokeWidth={1.5} />
           </a>
-          <button
-            className="hidden h-9 w-9 items-center justify-center rounded-full border border-hairline text-text-tertiary transition-colors hover:border-hairline-strong hover:text-foreground sm:inline-flex"
-            aria-label="Account (coming soon)"
-          >
-            <User size={15} strokeWidth={1.5} />
-          </button>
 
           {!inWorkspace ? (
             <Link to="/visualize" className="hidden md:block">

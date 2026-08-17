@@ -121,20 +121,28 @@
 
 /* Apple iOS Light Theme — clean, gentle on eyes, grouped surfaces */
 :root.light {
-  --background: oklch(0.965 0.005 260); /* Apple iOS System Gray 6 / grouped background */
-  --surface-1: oklch(1 0 0); /* Pure Apple elevated white card */
-  --surface-2: oklch(0.935 0.006 260); /* Apple Secondary System Fill */
-  --surface-3: oklch(0.89 0.008 260); /* Apple Tertiary System Fill */
-  --foreground: oklch(0.16 0.01 260); /* Apple primary label */
-  --text-secondary: oklch(0.44 0.01 260); /* Apple secondary label */
-  --text-tertiary: oklch(0.62 0.01 260); /* Apple tertiary label */
+  --background: oklch(0.965 0.005 260);
+  /* Apple iOS System Gray 6 / grouped background */
+  --surface-1: oklch(1 0 0);
+  /* Pure Apple elevated white card */
+  --surface-2: oklch(0.935 0.006 260);
+  /* Apple Secondary System Fill */
+  --surface-3: oklch(0.89 0.008 260);
+  /* Apple Tertiary System Fill */
+  --foreground: oklch(0.16 0.01 260);
+  /* Apple primary label */
+  --text-secondary: oklch(0.44 0.01 260);
+  /* Apple secondary label */
+  --text-tertiary: oklch(0.62 0.01 260);
+  /* Apple tertiary label */
   --hairline: oklch(0 0 0 / 8%);
   --hairline-strong: oklch(0 0 0 / 14%);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.16 0.01 260);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.16 0.01 260);
-  --primary: oklch(0.55 0.22 262); /* Apple iOS vibrant blue */
+  --primary: oklch(0.55 0.22 262);
+  /* Apple iOS vibrant blue */
   --primary-foreground: oklch(0.99 0 0);
   --accent: oklch(0.55 0.22 262);
   --accent-foreground: oklch(0.99 0 0);
@@ -211,29 +219,27 @@
 }
 
 @utility ambient-accent {
-  background: radial-gradient(
-    ellipse at center,
-    color-mix(in oklab, var(--primary) 22%, transparent) 0%,
-    transparent 70%
-  );
+  background: radial-gradient(ellipse at center,
+      color-mix(in oklab, var(--primary) 22%, transparent) 0%,
+      transparent 70%);
 }
 
 @utility sheen {
   position: relative;
   overflow: hidden;
+
   &::after {
     content: "";
     position: absolute;
     inset: 0;
-    background: linear-gradient(
-      100deg,
-      transparent 30%,
-      oklch(1 0 0 / 22%) 50%,
-      transparent 70%
-    );
+    background: linear-gradient(100deg,
+        transparent 30%,
+        oklch(1 0 0 / 22%) 50%,
+        transparent 70%);
     transform: translateX(-120%);
     transition: transform 600ms cubic-bezier(0.2, 0.7, 0.3, 1);
   }
+
   &:hover::after {
     transform: translateX(120%);
   }
@@ -257,13 +263,16 @@
   height: 8px;
   width: 8px;
 }
+
 .cv-scrollbar::-webkit-scrollbar-track {
   background: transparent;
 }
+
 .cv-scrollbar::-webkit-scrollbar-thumb {
   background: oklch(1 0 0 / 12%);
   border-radius: 999px;
 }
+
 .cv-scrollbar::-webkit-scrollbar-thumb:hover {
   background: oklch(1 0 0 / 20%);
 }
@@ -275,6 +284,7 @@
     opacity: 0;
     transform: translateY(10px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -285,6 +295,7 @@
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }
@@ -295,6 +306,7 @@
     opacity: 0;
     transform: scale(0.96);
   }
+
   to {
     opacity: 1;
     transform: scale(1);
@@ -305,16 +317,19 @@
   0% {
     box-shadow: 0 0 0 0 color-mix(in oklab, var(--viz-update) 55%, transparent);
   }
+
   100% {
     box-shadow: 0 0 0 8px transparent;
   }
 }
 
 @keyframes cv-cursor-blink {
+
   0%,
   49% {
     opacity: 1;
   }
+
   50%,
   100% {
     opacity: 0;
@@ -325,6 +340,7 @@
   0% {
     box-shadow: 0 0 0 0 color-mix(in oklab, var(--viz-update) 55%, transparent);
   }
+
   100% {
     box-shadow: 0 0 0 8px transparent;
   }
@@ -335,6 +351,7 @@
     opacity: 0;
     transform: translateY(4px);
   }
+
   to {
     opacity: 1;
     transform: none;
@@ -346,6 +363,7 @@
     opacity: 0;
     transform: translateY(8px) scale(0.99);
   }
+
   to {
     opacity: 1;
     transform: none;
@@ -353,10 +371,12 @@
 }
 
 @keyframes cv-breathe {
+
   0%,
   100% {
     box-shadow: 0 0 0 0 color-mix(in oklab, var(--primary) 40%, transparent);
   }
+
   50% {
     box-shadow: 0 0 0 6px transparent;
   }
@@ -403,16 +423,20 @@
 .tok-keyword {
   color: oklch(0.78 0.14 300);
 }
+
 .tok-string {
   color: oklch(0.82 0.13 150);
 }
+
 .tok-number {
   color: oklch(0.83 0.12 78);
 }
+
 .tok-comment {
   color: var(--text-tertiary);
   font-style: italic;
 }
+
 .tok-fn {
   color: oklch(0.82 0.1 235);
 }
@@ -429,34 +453,41 @@
 
 /* Code editor syntax tokens (Dark Mode default) */
 .cv-token-keyword {
-  color: #c084fc; /* Vibrant purple / violet */
+  color: #c084fc;
+  /* Vibrant purple / violet */
   font-weight: 600;
 }
 
 .cv-token-type {
-  color: #38bdf8; /* Vibrant sky cyan */
+  color: #38bdf8;
+  /* Vibrant sky cyan */
   font-weight: 500;
 }
 
 .cv-token-string {
-  color: #4ade80; /* Emerald green */
+  color: #4ade80;
+  /* Emerald green */
 }
 
 .cv-token-number {
-  color: #fb923c; /* Amber / warm orange */
+  color: #fb923c;
+  /* Amber / warm orange */
 }
 
 .cv-token-comment {
-  color: #94a3b8; /* Muted slate italic */
+  color: #94a3b8;
+  /* Muted slate italic */
   font-style: italic;
 }
 
 .cv-token-punct {
-  color: #94a3b8; /* Subtle zinc */
+  color: #94a3b8;
+  /* Subtle zinc */
 }
 
 .cv-token-id {
-  color: #f1f5f9; /* Bright clean white */
+  color: #f1f5f9;
+  /* Bright clean white */
 }
 
 /* Light Mode (Apple iOS / Xcode Developer Theme) */
@@ -485,25 +516,30 @@
 }
 
 :root.light .cv-token-keyword {
-  color: #a80084; /* Apple Xcode Keyword Purple */
+  color: #a80084;
+  /* Apple Xcode Keyword Purple */
   font-weight: 600;
 }
 
 :root.light .cv-token-type {
-  color: #0b6cb4; /* Apple Xcode Type Sky Blue */
+  color: #0b6cb4;
+  /* Apple Xcode Type Sky Blue */
   font-weight: 500;
 }
 
 :root.light .cv-token-string {
-  color: #c41a16; /* Apple Xcode Coral Red */
+  color: #c41a16;
+  /* Apple Xcode Coral Red */
 }
 
 :root.light .cv-token-number {
-  color: #1c00cf; /* Apple Xcode Navy Blue */
+  color: #1c00cf;
+  /* Apple Xcode Navy Blue */
 }
 
 :root.light .cv-token-comment {
-  color: #64748b; /* Apple Xcode Muted Slate */
+  color: #64748b;
+  /* Apple Xcode Muted Slate */
   font-style: italic;
 }
 
@@ -512,7 +548,8 @@
 }
 
 :root.light .cv-token-id {
-  color: #0f172a; /* Deep clean charcoal */
+  color: #0f172a;
+  /* Deep clean charcoal */
 }
 
 :root.light .cv-active-line {
@@ -523,6 +560,7 @@
 :root.light .cv-scrollbar::-webkit-scrollbar-thumb {
   background: oklch(0 0 0 / 12%);
 }
+
 :root.light .cv-scrollbar::-webkit-scrollbar-thumb:hover {
   background: oklch(0 0 0 / 22%);
 }
@@ -530,11 +568,13 @@
 :root.light ::-webkit-scrollbar-thumb {
   background: oklch(0 0 0 / 10%);
 }
+
 :root.light ::-webkit-scrollbar-thumb:hover {
   background: oklch(0 0 0 / 20%);
 }
 
 @media (prefers-reduced-motion: reduce) {
+
   *,
   *::before,
   *::after {
@@ -549,71 +589,19 @@
   width: 10px;
   height: 10px;
 }
+
 ::-webkit-scrollbar-track {
   background: transparent;
 }
+
 ::-webkit-scrollbar-thumb {
   background: oklch(1 0 0 / 10%);
   border-radius: 8px;
   border: 2px solid transparent;
   background-clip: content-box;
 }
+
 ::-webkit-scrollbar-thumb:hover {
   background: oklch(1 0 0 / 18%);
   background-clip: content-box;
 }
-
-/* ==========================================================================
-   CodeViz Watermark / Injected Badge Masking
-   Transforms any injected watermark / floating badge into sleek CodeViz badge
-   ========================================================================== */
-
-a[href*="lovable.dev"],
-#lovable-badge,
-.lovable-badge,
-[data-lovable-badge],
-div[class*="lovable-badge"] {
-  background: rgba(17, 17, 22, 0.85) !important;
-  backdrop-filter: blur(16px) saturate(180%) !important;
-  -webkit-backdrop-filter: blur(16px) saturate(180%) !important;
-  border: 1px solid rgba(76, 140, 255, 0.25) !important;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35), 0 0 12px rgba(76, 140, 255, 0.15) !important;
-  color: #f1f5f9 !important;
-  border-radius: 9999px !important;
-  font-family: var(--font-mono), monospace !important;
-  font-size: 11.5px !important;
-  font-weight: 600 !important;
-  letter-spacing: -0.01em !important;
-  transition: all 0.2s ease !important;
-}
-
-a[href*="lovable.dev"]:hover,
-#lovable-badge:hover,
-.lovable-badge:hover {
-  border-color: rgba(76, 140, 255, 0.5) !important;
-  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.45), 0 0 16px rgba(76, 140, 255, 0.25) !important;
-  transform: translateY(-1px) !important;
-}
-
-/* Hide any original Lovable logo svgs or text inside the badge */
-a[href*="lovable.dev"] svg,
-#lovable-badge svg,
-.lovable-badge svg {
-  display: none !important;
-}
-
-/* Inject CodeViz styling and icon via CSS pseudo-elements if DOM isn't replaced */
-a[href*="lovable.dev"]::before,
-#lovable-badge::before,
-.lovable-badge::before {
-  content: "" !important;
-  display: inline-block !important;
-  width: 14px !important;
-  height: 14px !important;
-  margin-right: 6px !important;
-  vertical-align: -2px !important;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none'%3E%3Cpath d='M8.5 7L3.5 12L8.5 17' stroke='%234C8CFF' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M13 14V17' stroke='%234C8CFF' stroke-width='2.4' stroke-linecap='round' opacity='0.6'/%3E%3Cpath d='M16.5 10V17' stroke='%234C8CFF' stroke-width='2.4' stroke-linecap='round' opacity='0.85'/%3E%3Cpath d='M20 6.5V17' stroke='%234C8CFF' stroke-width='2.4' stroke-linecap='round'/%3E%3Ccircle cx='20' cy='4.5' r='1.5' fill='%234C8CFF'/%3E%3C/svg%3E") !important;
-  background-size: contain !important;
-  background-repeat: no-repeat !important;
-}
-

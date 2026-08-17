@@ -1,4 +1,4 @@
-# CodeViz
+# VizCode
 
 <div align="center">
   <p align="center">
@@ -17,22 +17,22 @@
 
 <!-- Screenshot Placeholder: Hero / Landing Overview -->
 <div align="center">
-  <img src="assets/hero-banner.png" alt="CodeViz Hero Banner" width="100%" />
+  <img src="assets/hero-banner.png" alt="VizCode Hero Banner" width="100%" />
   <p><em>Interactive landing experience with live step-by-step algorithm animation</em></p>
 </div>
 
 ## Overview
 
-**CodeViz** is a visual debugger and algorithm execution visualizer built for understanding code execution rather than just viewing the final output. 
+**VizCode** is a visual debugger and algorithm execution visualizer built for understanding code execution rather than just viewing the final output. 
 
-Instead of mentally parsing complex loops, recursion trees, and state transitions, CodeViz instruments algorithm source code, captures a deterministic execution trace, and renders every state change—array cell mutations, pointer movements, dynamic programming table fills, and call stack frames—step by step.
+Instead of mentally parsing complex loops, recursion trees, and state transitions, VizCode instruments algorithm source code, captures a deterministic execution trace, and renders every state change—array cell mutations, pointer movements, dynamic programming table fills, and call stack frames—step by step.
 
 ---
 
 <!-- Screenshot Placeholder: Interactive Workspace -->
 <div align="center">
-  <img src="assets/workspace-demo.png" alt="CodeViz Workspace Interface" width="100%" />
-  <p><em>CodeViz Workspace: Synchronized Code Editor, Visualizer Canvas, and Timeline Scrubber</em></p>
+  <img src="assets/workspace-demo.png" alt="VizCode Workspace Interface" width="100%" />
+  <p><em>VizCode Workspace: Synchronized Code Editor, Visualizer Canvas, and Timeline Scrubber</em></p>
 </div>
 
 ---
@@ -42,13 +42,13 @@ Instead of mentally parsing complex loops, recursion trees, and state transition
 - **⚡ Real-Time In-Browser Execution & Tracing**: Step forwards, backwards, or scrub smoothly across the full algorithm lifecycle.
 - **🎯 Dynamic Data Structure Canvas**:
   - **1D & 2D Arrays**: Watch indices, value swaps, comparisons, and window bounds update with smooth visual transitions.
-  - **Dynamic Programming Tables**: Inspect memoization grids with highlighted cell dependencies and transitions.
+  - **Dynamic Programming Tables (1D, 2D, 3D Tensors)**: Inspect memoization grids and 3D DP slices with highlighted cell dependencies and transitions.
   - **Matrices & Grids**: Visualize 2D pathfinding and matrix transformations.
   - **Recursion & Call Trees**: Observe call stacks unfold, resolve return values, and collapse back.
   - **Variable Inspector**: Track scalar variables and loop indices across every step.
-- **🔍 Multi-Language Support**: Write algorithms in **JavaScript**, **TypeScript**, and **Python**.
+- **🔍 Multi-Language Support**: Write algorithms in **C++**, **Java**, **Python**, and **JavaScript**.
 - **⏱️ Scrubbable Timeline**: Scrub precisely to any execution step, jump between mutation events, or adjust playback speed.
-- **🎨 Apple-Grade Minimalist UI**: Sleek dark-mode aesthetic with glassmorphic accents, responsive design, and smooth animations.
+- **🎨 Modern Dark-Mode UI**: Sleek dark-mode aesthetic with glassmorphic accents, responsive design, and smooth animations.
 - **📚 Curated Algorithm Library**: Pre-built, annotated traces for Sorting, Binary Search, Sliding Window, Kadane's Algorithm, Knapsack DP, LIS, BFS, and DFS.
 
 ---
@@ -66,7 +66,7 @@ Instead of mentally parsing complex loops, recursion trees, and state transition
 | Mode | Target Structure | Ideal For |
 | :--- | :--- | :--- |
 | **Array Visualizer** | `1D Array / Pointers` | Two pointers, Sliding Window, Sorting, Binary Search |
-| **DP Matrix** | `2D DP Table` | 0/1 Knapsack, LCS, Edit Distance, Grid Paths |
+| **DP Matrix & Tensors** | `1D / 2D / 3D DP Tables` | 0/1 Knapsack, LCS, Edit Distance, Cherry Pickup, Grid Paths |
 | **Recursion Tree** | `Call Stack / Tree` | Divide & Conquer, Tree Traversals, Backtracking, Fibonacci |
 | **Matrix Grid** | `2D Matrix` | Flood Fill, Island Count, Matrix Rotations |
 | **Variable Inspector** | `Scalar State` | Loop counters, accumulated sums, max/min trackers |
@@ -96,10 +96,10 @@ Instead of mentally parsing complex loops, recursion trees, and state transition
 
 ```bash
 # Clone the repository
-git clone https://github.com/hemankkumar24/CodeViz.git
+git clone https://github.com/hemankkumar24/VizCode.git
 
 # Navigate to project directory
-cd CodeViz
+cd VizCode
 
 # Install dependencies
 npm install
@@ -132,10 +132,10 @@ npm run preview
 ## 📁 Project Structure
 
 ```
-CodeViz/
+VizCode/
 ├── public/                     # Static assets (favicons, manifest, icons)
-│   ├── favicon.svg             # CodeViz SVG vector logo
-│   └── favicon.ico             # CodeViz multi-resolution ICO
+│   ├── favicon.svg             # VizCode SVG vector logo
+│   └── favicon.ico             # VizCode multi-resolution ICO
 ├── src/
 │   ├── components/
 │   │   ├── editor/             # Code editor & visualization configuration panels
@@ -153,7 +153,7 @@ CodeViz/
 │   │   ├── visualize.tsx       # Main interactive visualizer workspace
 │   │   ├── examples.tsx        # Algorithm library & catalog
 │   │   ├── learn.tsx           # Educational visual explanations
-│   │   └── about.tsx           # About CodeViz
+│   │   └── about.tsx           # About VizCode
 │   ├── state/                  # Workspace context & execution store
 │   ├── styles.css              # Tailwind CSS configuration & design tokens
 │   └── types/                  # TypeScript definitions for execution & languages
@@ -163,19 +163,11 @@ CodeViz/
 
 ---
 
-## 📬 Feedback & Contact
-
-Have feedback, questions, or feature requests? Feel free to reach out via:
-- **Email**: [hemankkumar24@gmail.com](mailto:hemankkumar24@gmail.com)
-- **GitHub Issues**: [https://github.com/hemankkumar24/CodeViz/issues](https://github.com/hemankkumar24/CodeViz/issues)
-
----
-
 ## 🤝 Contributing
 
 Contributions, issues, and feature requests are welcome!
 
-1. Fork the Project ([https://github.com/hemankkumar24/CodeViz](https://github.com/hemankkumar24/CodeViz))
+1. Fork the Project ([https://github.com/hemankkumar24/VizCode](https://github.com/hemankkumar24/VizCode))
 2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
 3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
 4. Push to the Branch (`git push origin feature/AmazingFeature`)

@@ -77,12 +77,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "CodeViz" },
+      { title: "VizCode" },
       {
         name: "description",
         content: "A visual debugger for algorithms — step through code and watch state change in real time.",
       },
-      { property: "og:title", content: "CodeViz" },
+      { property: "og:title", content: "VizCode" },
       {
         property: "og:description",
         content: "Step through algorithm code and watch arrays, DP tables and call stacks change.",
@@ -119,41 +119,7 @@ function RootShell({ children }: { children: ReactNode }) {
       <head>
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){
-              try{
-                var t=localStorage.getItem("algorithm-viz-theme");
-                if(t==="light"||(!t&&window.matchMedia("(prefers-color-scheme: light)").matches)){
-                  document.documentElement.classList.add("light");
-                  document.documentElement.style.colorScheme="light";
-                }else{
-                  document.documentElement.classList.add("dark");
-                  document.documentElement.style.colorScheme="dark";
-                }
-              }catch(e){}
-              function maskBadges(){
-                try{
-                  var targets = document.querySelectorAll('a[href*="lovable.dev"], #lovable-badge, .lovable-badge, [data-lovable-badge]');
-                  for (var i = 0; i < targets.length; i++) {
-                    var el = targets[i];
-                    if (el.getAttribute("data-cv-masked")) continue;
-                    el.setAttribute("data-cv-masked", "true");
-                    el.setAttribute("href", "https://github.com/hemankkumar24/CodeViz");
-                    el.setAttribute("title", "CodeViz");
-                    el.setAttribute("aria-label", "CodeViz");
-                    el.innerHTML = '<span style="display:inline-flex;align-items:center;gap:6px;padding:2px 4px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" style="display:inline-block;vertical-align:-2px"><path d="M8.5 7L3.5 12L8.5 17" stroke="#4C8CFF" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M13 14V17" stroke="#4C8CFF" stroke-width="2.2" stroke-linecap="round" opacity="0.6"/><path d="M16.5 10V17" stroke="#4C8CFF" stroke-width="2.2" stroke-linecap="round" opacity="0.85"/><path d="M20 6.5V17" stroke="#4C8CFF" stroke-width="2.2" stroke-linecap="round"/><circle cx="20" cy="4.5" r="1.5" fill="#4C8CFF"/></svg><span>CodeViz</span></span>';
-                  }
-                }catch(e){}
-              }
-              if (typeof window !== "undefined") {
-                if (document.readyState === "loading") {
-                  document.addEventListener("DOMContentLoaded", maskBadges);
-                } else {
-                  maskBadges();
-                }
-                var obs = new MutationObserver(maskBadges);
-                obs.observe(document.documentElement, { childList: true, subtree: true });
-              }
-            })();`,
+            __html: `(function(){try{var t=localStorage.getItem("algorithm-viz-theme");if(t==="light"||(!t&&window.matchMedia("(prefers-color-scheme: light)").matches)){document.documentElement.classList.add("light");document.documentElement.style.colorScheme="light";}else{document.documentElement.classList.add("dark");document.documentElement.style.colorScheme="dark";}}catch(e){}})();`,
           }}
         />
         <HeadContent />

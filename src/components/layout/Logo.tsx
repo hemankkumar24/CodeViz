@@ -4,7 +4,7 @@ export function Logo({ className, showWordmark = true }: { className?: string; s
   return (
     <span className={cn("inline-flex items-center gap-2.5 select-none group", className)}>
       <span className="relative flex h-8 w-8 items-center justify-center rounded-[9px] border border-primary/25 bg-gradient-to-b from-surface-2 via-surface-2/80 to-surface-3 shadow-[0_0_12px_rgba(76,140,255,0.15)] ring-1 ring-white/10 transition-all duration-200 group-hover:border-primary/45 group-hover:shadow-[0_0_16px_rgba(76,140,255,0.25)]">
-        {/* Sleek CodeViz Symbol: Stylized Code Bracket + Data Waveform / Step Bars */}
+        {/* Sleek VizCode Symbol: Stylized Code Bracket + Data Waveform / Step Bars */}
         <svg
           width="18"
           height="18"

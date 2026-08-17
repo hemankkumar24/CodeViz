@@ -7,13 +7,13 @@ import { useSmoothScroll } from "@/hooks/useSmoothScroll";
 export const Route = createFileRoute("/about")({
   head: () => ({
     meta: [
-      { title: "CodeViz" },
+      { title: "VizCode" },
       {
         name: "description",
         content:
-          "CodeViz turns algorithm code into a stepped, visual trace so you can see state change instead of imagining it.",
+          "VizCode turns algorithm code into a stepped, visual trace so you can see state change instead of imagining it.",
       },
-      { property: "og:title", content: "CodeViz" },
+      { property: "og:title", content: "VizCode" },
       {
         property: "og:description",
         content: "Why we built a visual debugger for algorithms, and what runs under the hood.",
@@ -41,7 +41,7 @@ function AboutPage() {
         <div className="mt-8 space-y-6 text-[15px] leading-relaxed text-text-secondary">
           <p>
             Reading an algorithm means simulating it in your head: which index moved, which cell was
-            written, what the stack looked like three calls ago. CodeViz does that simulation
+            written, what the stack looked like three calls ago. VizCode does that simulation
             for you and draws it, one step at a time.
           </p>
           <p>

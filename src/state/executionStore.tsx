@@ -136,23 +136,23 @@ export function parseInput(raw: string, kind: InputData["kind"]): ParsedInput {
   if (kind === "variables") {
     const entries: Record<string, unknown> = {};
     const lines = text.split("\n").map((l) => l.trim()).filter(Boolean);
-    
+
     for (const line of lines) {
       const eqIdx = line.indexOf("=");
       const colonIdx = line.indexOf(":");
       const splitIdx = eqIdx !== -1 ? eqIdx : colonIdx;
-      
+
       if (splitIdx === -1) {
         return { ok: false, message: `Expected \`name = value\`, found \`${line}\`.` };
       }
-      
+
       const key = line.slice(0, splitIdx).trim();
       const valStr = line.slice(splitIdx + 1).trim();
-      
+
       if (!/^[A-Za-z_]\w*$/.test(key)) {
         return { ok: false, message: `Invalid variable name \`${key}\`.` };
       }
-      
+
       if (valStr.startsWith("[")) {
         try {
           const parsed = JSON.parse(valStr);
@@ -167,7 +167,7 @@ export function parseInput(raw: string, kind: InputData["kind"]): ParsedInput {
           continue;
         }
       }
-      
+
       const num = Number(valStr);
       if (!isNaN(num)) {
         entries[key] = num;
@@ -177,7 +177,7 @@ export function parseInput(raw: string, kind: InputData["kind"]): ParsedInput {
         entries[key] = valStr;
       }
     }
-    
+
     const count = Object.keys(entries).length;
     if (!count) return { ok: false, message: "No variables found." };
     return { ok: true, data: { kind: "variables", values: entries }, summary: `${count} variable${count === 1 ? "" : "s"} detected` };
@@ -239,7 +239,7 @@ type State = {
   paramValues: Record<string, string>;
   visualizationType: VisualizationType;
   selectedVariable: string | null;
-  dpDimensions: "1D" | "2D" | "3D";
+  dpDimensions: "1D" | "2D";
   multiSelection: string[];
   events: InternalExecutionEvent[];
   currentStep: number;
@@ -291,7 +291,7 @@ type Action =
   | { type: "setParamValues"; values: Record<string, string> }
   | { type: "setVisualizationType"; value: VisualizationType }
   | { type: "setSelectedVariable"; value: string | null }
-  | { type: "setDpDimensions"; value: "1D" | "2D" | "3D" }
+  | { type: "setDpDimensions"; value: "1D" | "2D" }
   | { type: "toggleMulti"; value: string }
   | { type: "loadExample"; example: Example }
   | { type: "setExecuting" }
@@ -382,8 +382,8 @@ function reducer(state: State, action: Action): State {
           : ex.input.kind === "matrix"
             ? ex.input.values.map((r) => `[${r.join(", ")}]`).join("\n")
             : Object.entries(ex.input.values)
-                .map(([k, v]) => `${k} = ${typeof v === "object" ? JSON.stringify(v) : v}`)
-                .join("\n");
+              .map(([k, v]) => `${k} = ${typeof v === "object" ? JSON.stringify(v) : v}`)
+              .join("\n");
 
       return {
         ...initialState,
@@ -594,24 +594,8 @@ function useWorkspaceInternal() {
   const structure = useMemo(() => {
     if (state.selectedVariable) return state.selectedVariable;
     const first = state.events[state.currentStep]?.snapshots;
-    if (!first) return null;
-    const keys = Object.keys(first);
-    if (!keys.length) return null;
-
-    // If DP visualization is requested, prioritize DP/memo variables
-    if (state.visualizationType === "dp") {
-      const dpKey = keys.find((k) => /^(dp|memo|cache|table|opt|cost|ans)/i.test(k));
-      if (dpKey) return dpKey;
-    }
-
-    // In auto mode, if a DP table exists, prioritize it
-    if (state.visualizationType === "auto") {
-      const dpKey = keys.find((k) => /^(dp|memo|cache|table|opt)/i.test(k));
-      if (dpKey) return dpKey;
-    }
-
-    return keys[0] ?? null;
-  }, [state.selectedVariable, state.events, state.currentStep, state.visualizationType]);
+    return first ? (Object.keys(first)[0] ?? null) : null;
+  }, [state.selectedVariable, state.events, state.currentStep]);
 
   const viz = useMemo(
     () => selectVisualizationState({ events: state.events, currentStep: state.currentStep }, structure),

@@ -33,21 +33,7 @@ class CppIterator {
   constructor(
     public arr: any[],
     public index: number,
-  ) {}
-  get value() {
-    return this.arr[this.index];
-  }
-  valueOf() {
-    return this.arr[this.index];
-  }
-  toString() {
-    return String(this.arr[this.index]);
-  }
-  [Symbol.toPrimitive](hint: string) {
-    if (hint === "number") return Number(this.arr[this.index]);
-    if (hint === "string") return String(this.arr[this.index]);
-    return this.arr[this.index];
-  }
+  ) { }
 }
 
 /* ======================== Array.prototype Polyfills ======================== */
@@ -206,7 +192,7 @@ defStr("substr", function (this: string, pos: number, len?: number) {
 
 /* ======================== C++ STL UnorderedMap ======================== */
 
-const UM_METHODS = new Set(["has","count","find","end","begin","erase","size","empty","insert","clear","keys","values","entries","length"]);
+const UM_METHODS = new Set(["has", "count", "find", "end", "begin", "erase", "size", "empty", "insert", "clear", "keys", "values", "entries", "length"]);
 
 class UnorderedMap {
   constructor(init?: any) {
@@ -397,46 +383,12 @@ function globalUpperBound(arrOrBegin: any, endOrVal: any, val?: any): number {
   return lo;
 }
 
-function globalMaxElement(first: any, last?: any): any {
-  if (first && first.__isCppIterator) {
-    const arr = first.arr;
-    const start = first.index;
-    const end = last && last.__isCppIterator ? last.index : arr.length;
-    const slice = arr.slice(start, end);
-    const maxVal = Math.max(...slice);
-    const idx = arr.indexOf(maxVal, start);
-    return new CppIterator(arr, idx !== -1 ? idx : start);
-  }
-  if (Array.isArray(first)) {
-    return Math.max(...first);
-  }
-  return first;
-}
-
-function globalMinElement(first: any, last?: any): any {
-  if (first && first.__isCppIterator) {
-    const arr = first.arr;
-    const start = first.index;
-    const end = last && last.__isCppIterator ? last.index : arr.length;
-    const slice = arr.slice(start, end);
-    const minVal = Math.min(...slice);
-    const idx = arr.indexOf(minVal, start);
-    return new CppIterator(arr, idx !== -1 ? idx : start);
-  }
-  if (Array.isArray(first)) {
-    return Math.min(...first);
-  }
-  return first;
-}
-
 /* ======================== BUILTINS ======================== */
 
 const BUILTINS: Record<string, any> = {
   Math, Array, Set, Map, Object, Number, String, Boolean,
   parseInt, parseFloat, isNaN, isFinite, Infinity, NaN, undefined,
   null: null, nullptr: null, NULL: null, true: true, false: false,
-  max_element: globalMaxElement,
-  min_element: globalMinElement,
 
   // C / C++ standard limits
   INT_MIN: -2147483648, INT_MAX: 2147483647,

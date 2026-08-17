@@ -677,8 +677,8 @@ function preprocess(code: string, lang: "cpp" | "java"): string {
 
     // Strip preprocessor directives
     if (trimmed.startsWith("#include") || trimmed.startsWith("#pragma") || trimmed.startsWith("#ifndef") ||
-        trimmed.startsWith("#define") || trimmed.startsWith("#endif") || trimmed.startsWith("#ifdef") ||
-        trimmed.startsWith("#undef") || trimmed.startsWith("#if ")) {
+      trimmed.startsWith("#define") || trimmed.startsWith("#endif") || trimmed.startsWith("#ifdef") ||
+      trimmed.startsWith("#undef") || trimmed.startsWith("#if ")) {
       result.push("");
       continue;
     }
@@ -1007,11 +1007,6 @@ function postprocess(code: string, lang: "cpp" | "java"): string {
   result = result.replace(/\(double\)\s*(\w[\w.[\]]*)/g, "Number($1)");
   result = result.replace(/\(float\)\s*(\w[\w.[\]]*)/g, "Number($1)");
   result = result.replace(/\(char\)\s*(\w[\w.[\]]*)/g, "String.fromCharCode($1)");
-
-  // C++ dereference operator: *max_element(...), *min_element(...), return *expr, *it, *ptr
-  result = result.replace(/\*\s*(max_element|min_element|lower_bound|upper_bound|find|accumulate)\b/g, "$1");
-  result = result.replace(/\breturn\s+\*\s*/g, "return ");
-  result = result.replace(/(^|[=([,;:+\-!&|?]\s*)\*\s*(?=[A-Za-z_])/gm, "$1");
 
   // Java lambda: (args) -> expr → (args) => expr
   if (lang === "java") {
