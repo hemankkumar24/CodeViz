@@ -63,7 +63,7 @@ export function Footer() {
             </li>
             <li>
               <a
-                href="https://github.com"
+                href="https://github.com/hemankkumar24/CodeViz"
                 target="_blank"
                 rel="noreferrer"
                 className="text-[13.5px] text-text-secondary hover:text-foreground"
@@ -73,7 +73,7 @@ export function Footer() {
             </li>
             <li>
               <a
-                href="mailto:hello@codeviz.dev"
+                href="mailto:hemankkumar24@gmail.com"
                 className="text-[13.5px] text-text-secondary hover:text-foreground"
               >
                 Feedback
