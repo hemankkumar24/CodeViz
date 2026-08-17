@@ -1008,6 +1008,11 @@ function postprocess(code: string, lang: "cpp" | "java"): string {
   result = result.replace(/\(float\)\s*(\w[\w.[\]]*)/g, "Number($1)");
   result = result.replace(/\(char\)\s*(\w[\w.[\]]*)/g, "String.fromCharCode($1)");
 
+  // C++ dereference operator: *max_element(...), *min_element(...), return *expr, *it, *ptr
+  result = result.replace(/\*\s*(max_element|min_element|lower_bound|upper_bound|find|accumulate)\b/g, "$1");
+  result = result.replace(/\breturn\s+\*\s*/g, "return ");
+  result = result.replace(/(^|[=([,;:+\-!&|?]\s*)\*\s*(?=[A-Za-z_])/gm, "$1");
+
   // Java lambda: (args) -> expr → (args) => expr
   if (lang === "java") {
     result = result.replace(/(\([^)]*\))\s*->\s*/g, "$1 => ");

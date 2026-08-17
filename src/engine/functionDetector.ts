@@ -185,15 +185,15 @@ function extractParams(params: ESTree.Pattern[]): DetectedParam[] {
 
 function detectFunctionsRegex(code: string): DetectedFunction[] {
   const functions: DetectedFunction[] = [];
-  // Matches JS, Python, C++, Java function definitions
-  const fnRegex = /(?:(?:(?:public|private|protected|static|virtual|inline|const|auto|void|int|double|float|bool|string|vector<[^>]+>|pair<[^>]+>|List<[^>]+>|Set<[^>]+>|int\[\](?:\[\])*)\s+)*(?:def\s+|function\s+)?(\w+)\s*\(([^)]*)\)\s*(?:->\s*[^:{]+)?\s*\{?)/g;
+  // Matches JS, Python, C++, Java function definitions that have an opening brace { or colon : (Python)
+  const fnRegex = /(?:(?:(?:public|private|protected|static|virtual|inline|const|auto|void|int|double|float|bool|string|vector<[^>]+>|pair<[^>]+>|List<[^>]+>|Set<[^>]+>|int\[\](?:\[\])*)\s+)*(?:def\s+|function\s+)?([A-Za-z_]\w*)\s*\(([^)]*)\)\s*(?:->\s*[^:{]+)?\s*(?:\{|:))/g;
 
   let match;
   while ((match = fnRegex.exec(code)) !== null) {
     const name = match[1];
     if (
       name &&
-      !["if", "while", "for", "switch", "catch", "return", "class", "else"].includes(name)
+      !["if", "while", "for", "switch", "catch", "return", "class", "else", "vector", "set", "map", "queue", "stack", "deque", "pair", "tuple", "size", "max", "min"].includes(name)
     ) {
       const rawParams = match[2] ?? "";
       const params = rawParams
