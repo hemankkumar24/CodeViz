@@ -54,21 +54,24 @@ function ExamplesPage() {
         </header>
 
         <div className="mt-8 flex flex-wrap gap-2">
-          {[undefined, ...allCategories].map((cat) => (
-            <button
-              key={cat ?? "all"}
-              type="button"
-              onClick={() => navigate({ to: "/examples", search: cat ? { category: cat } : {} })}
-              className={cn(
-                "rounded-full border px-3 py-1.5 text-[12.5px] transition-colors",
-                (cat ?? undefined) === category
-                  ? "border-primary/50 bg-primary/12 text-primary"
-                  : "border-hairline bg-surface-1 text-text-secondary hover:text-foreground",
-              )}
-            >
-              {cat ?? "All"}
-            </button>
-          ))}
+          {[undefined, ...allCategories].map((cat) => {
+            const isActive = (!category && !cat) || category === cat;
+            return (
+              <button
+                key={cat ?? "all"}
+                type="button"
+                onClick={() => navigate({ to: "/examples", search: cat ? { category: cat } : {} })}
+                className={cn(
+                  "rounded-full border px-3 py-1.5 text-[12.5px] transition-colors",
+                  isActive
+                    ? "border-primary/50 bg-primary/12 text-primary font-medium shadow-[0_0_10px_rgba(76,140,255,0.2)]"
+                    : "border-hairline bg-surface-1 text-text-secondary hover:text-foreground",
+                )}
+              >
+                {cat ?? "All"}
+              </button>
+            );
+          })}
         </div>
 
         {filtered.length ? (

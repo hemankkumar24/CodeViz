@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { z } from "zod";
 import { Play, AlertCircle, Sparkles, Loader2, Clock, Zap, RotateCcw, Code2, History } from "lucide-react";
 import { GlobalNav } from "@/components/layout/GlobalNav";
@@ -104,10 +104,22 @@ function VisualizePage() {
     if (example) loadExampleBySlug(example);
   }, [example, loadExampleBySlug]);
 
-  const handleRun = () => {
+  const handleRun = useCallback(() => {
+    if (!canRun || isExecuting) return;
     run();
     setMobileTab("canvas");
-  };
+  }, [canRun, isExecuting, run]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+        e.preventDefault();
+        handleRun();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [handleRun]);
 
   return (
     <div className="flex h-screen max-h-screen flex-col overflow-hidden bg-background">
@@ -186,6 +198,7 @@ function VisualizePage() {
                     size="sm"
                     onClick={handleRun}
                     disabled={!canRun}
+                    title="Visualize code (Ctrl + Enter)"
                     className="h-7 px-3 text-[11.5px] font-semibold shadow-sm"
                   >
                     {isExecuting ? (
@@ -252,7 +265,8 @@ function VisualizePage() {
                     size="sm"
                     onClick={handleRun}
                     disabled={!canRun}
-                    className="h-7 px-3 text-[11.5px] font-semibold shadow-sm"
+                    title="Visualize code (Ctrl + Enter)"
+                    className="h-7 px-3 text-[11.5px] font-semibold shadow-sm group"
                   >
                     {isExecuting ? (
                       <Loader2 size={12} strokeWidth={2.5} className="animate-spin" />
@@ -260,6 +274,9 @@ function VisualizePage() {
                       <Play size={12} strokeWidth={2.5} className="fill-current" />
                     )}
                     <span>{isExecuting ? "Running…" : "Visualize"}</span>
+                    <span className="hidden xl:inline-block ml-1 opacity-70 font-mono text-[9.5px] tracking-normal bg-black/20 px-1 py-0.5 rounded border border-white/10 group-hover:opacity-100 transition-opacity">
+                      Ctrl+↵
+                    </span>
                   </CvButton>
                 </div>
               </div>
@@ -269,6 +286,7 @@ function VisualizePage() {
               <CodeEditor
                 value={code}
                 onChange={(next) => dispatch({ type: "setCode", code: next })}
+                onRun={handleRun}
                 language={language}
                 activeLine={events.length ? viz?.line : undefined}
                 errorLine={store.error?.line}
@@ -375,6 +393,7 @@ function VisualizePage() {
               size="sm"
               onClick={handleRun}
               disabled={!canRun}
+              title="Visualize code (Ctrl + Enter)"
               className="h-8 px-4 text-[12.5px] font-semibold shadow-md shadow-primary/25"
             >
               {isExecuting ? (

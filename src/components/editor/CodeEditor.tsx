@@ -6,6 +6,7 @@ import type { SupportedLanguage } from "@/types/languages";
 export type CodeEditorProps = {
   value: string;
   onChange: (value: string) => void;
+  onRun?: () => void;
   language?: SupportedLanguage;
   activeLine?: number | undefined;
   errorLine?: number | undefined;
@@ -17,6 +18,7 @@ export type CodeEditorProps = {
 export function CodeEditor({
   value,
   onChange,
+  onRun,
   language = "cpp",
   activeLine,
   errorLine,
@@ -100,6 +102,12 @@ export function CodeEditor({
             autoComplete="off"
             autoCorrect="off"
             onChange={(e) => onChange(e.target.value)}
+            onKeyDown={(e) => {
+              if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+                e.preventDefault();
+                onRun?.();
+              }
+            }}
             aria-label="Code editor"
             className="absolute inset-0 block h-full w-full resize-none overflow-hidden whitespace-pre bg-transparent font-mono text-[13px] leading-[22px] text-transparent caret-primary outline-none selection:bg-primary/25 border-0 py-3 pl-3 pr-8 m-0"
           />

@@ -17,7 +17,6 @@ export type Example = {
 };
 
 export const allCategories = [
-  "All",
   "Sorting",
   "Searching",
   "Two Pointers",
