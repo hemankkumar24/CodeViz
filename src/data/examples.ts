@@ -17,6 +17,7 @@ export type Example = {
 };
 
 export const allCategories = [
+  "Linked List",
   "Sorting",
   "Searching",
   "Two Pointers",
@@ -497,6 +498,47 @@ public static List<Integer> dfs(int[][] graph, int start) {
 }`,
     },
     input: { kind: "variables", values: { graph: [[1, 2], [0, 3, 4], [0], [1], [1]], start: 0 } },
+  },
+  {
+    slug: "reverse-linked-list",
+    title: "Reverse Linked List",
+    description: "Reverse a singly linked list in-place by redirecting node pointers step by step.",
+    categories: ["Linked List", "Two Pointers"],
+    difficulty: "Easy",
+    visualizationType: "linkedlist",
+    visualizationLabel: "Linked List",
+    targetVariable: "head",
+    traced: true,
+    previewKind: "array",
+    code: {
+      cpp: `ListNode* reverseList(ListNode* head) {
+    ListNode* prev = NULL;
+    ListNode* curr = head;
+
+    while (curr != NULL) {
+        ListNode* next = curr->next;
+        curr->next = prev;
+        prev = curr;
+        curr = next;
+    }
+
+    return prev;
+}`,
+      java: `public ListNode reverseList(ListNode head) {
+    ListNode prev = null;
+    ListNode curr = head;
+
+    while (curr != null) {
+        ListNode next = curr.next;
+        curr.next = prev;
+        prev = curr;
+        curr = next;
+    }
+
+    return prev;
+}`,
+    },
+    input: { kind: "variables", values: { head: [1, 2, 3, 4, 5] } },
   },
 ];
 

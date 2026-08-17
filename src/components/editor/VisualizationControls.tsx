@@ -5,6 +5,7 @@ import type { VisualizationType } from "@/types/execution";
 
 const TYPES: { value: VisualizationType; label: string }[] = [
   { value: "auto", label: "Auto" },
+  { value: "linkedlist", label: "List" },
   { value: "array", label: "Array" },
   { value: "matrix", label: "Matrix" },
   { value: "dp", label: "DP" },

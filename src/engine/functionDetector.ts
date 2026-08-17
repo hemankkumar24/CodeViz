@@ -18,6 +18,7 @@ export type InferredType =
   | "string"
   | "string[]"
   | "boolean"
+  | "linkedlist"
   | "unknown";
 
 export type DetectedParam = {
@@ -38,6 +39,16 @@ export type DetectedFunction = {
 function inferParamType(name: string, rawWithTypes = ""): InferredType {
   const lower = name.toLowerCase();
   const rawLower = rawWithTypes.toLowerCase();
+
+  // Check Linked List types
+  if (
+    rawLower.includes("listnode") ||
+    rawLower.includes("node*") ||
+    rawLower.includes("node ") ||
+    ["head", "list", "l1", "l2", "list1", "list2"].includes(lower)
+  ) {
+    return "linkedlist";
+  }
 
   // Check C++/Java type hints in raw signature
   if (rawLower.includes("vector<vector<") || rawLower.includes("[][]") || rawLower.includes("list<list<")) {

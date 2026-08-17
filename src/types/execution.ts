@@ -15,6 +15,7 @@ export type VisualizationType =
   | "variables"
   | "multiple"
   | "recursion"
+  | "linkedlist"
   | "auto";
 
 export type ChangeType = "update" | "insert" | "delete";

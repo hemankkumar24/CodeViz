@@ -4,6 +4,7 @@ import { DPVisualizer } from "./DPVisualizer";
 import { RecursionVisualizer } from "./RecursionVisualizer";
 import { VariableInspector } from "./VariableInspector";
 import { GraphTraversalVisualizer } from "./GraphTraversalVisualizer";
+import { LinkedListVisualizer } from "./LinkedListVisualizer";
 import { EmptyState, GhostCells } from "@/components/ui/cv";
 import { useWorkspace } from "@/state/executionStore";
 import type { VisualizationType } from "@/types/execution";
@@ -12,6 +13,10 @@ const asArray = (v: unknown): (number | null)[] | null =>
   Array.isArray(v) && !Array.isArray(v[0]) ? (v as (number | null)[]) : null;
 const asMatrix = (v: unknown): (number | null)[][] | null =>
   Array.isArray(v) && Array.isArray(v[0]) ? (v as (number | null)[][]) : null;
+
+function isListNode(v: unknown): boolean {
+  return v !== null && typeof v === "object" && "val" in v && ("next" in v || (v as any).next === null);
+}
 
 /**
  * Dispatches to a renderer based on the selected visualization type.
@@ -34,6 +39,11 @@ export function VisualizationCanvas() {
     );
   }
 
+  const hasLinkedList =
+    Object.values(viz.variables).some(isListNode) ||
+    Object.values(viz.structures).some(isListNode) ||
+    (viz.variables && ["head", "curr", "prev", "next", "dummy", "tail", "slow", "fast", "l1", "l2"].some((k) => k in viz.variables && viz.variables[k] !== undefined));
+
   const hasGraphOrQueue =
     ("graph" in viz.structures && ("queue" in viz.structures || "seen" in viz.structures || "order" in viz.structures)) ||
     ("queue" in viz.structures && "seen" in viz.structures);
@@ -47,15 +57,17 @@ export function VisualizationCanvas() {
   const resolved: VisualizationType =
     visualizationType !== "auto"
       ? visualizationType
-      : hasGraphOrQueue
-        ? "multiple"
-        : isRecursionTrace
-          ? "recursion"
-          : asMatrix(snapshot)
-            ? "matrix"
-            : asArray(snapshot)
-              ? "array"
-              : "variables";
+      : hasLinkedList
+        ? "linkedlist"
+        : hasGraphOrQueue
+          ? "multiple"
+          : isRecursionTrace
+            ? "recursion"
+            : asMatrix(snapshot)
+              ? "matrix"
+              : asArray(snapshot)
+                ? "array"
+                : "variables";
 
   const prevVariables = events[Math.max(0, viz.step - 1)]?.variables;
 
@@ -83,6 +95,14 @@ export function VisualizationCanvas() {
   const renderOne = (type: VisualizationType, name: string | null) => {
     const data = name ? viz.structures[name] : snapshot;
     switch (type) {
+      case "linkedlist":
+        return (
+          <LinkedListVisualizer
+            variables={viz.variables}
+            structures={viz.structures}
+            changedCells={viz.changedCells}
+          />
+        );
       case "recursion":
         return (
           <RecursionVisualizer

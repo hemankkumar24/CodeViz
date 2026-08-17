@@ -12,18 +12,44 @@ import type { ExecutionEvent, StateChange, CallFrame, ChangeType } from "@/types
 
 /* ---------------------- Snapshot & Diff utilities ----------------------- */
 
-/** Deep clone a value (handles arrays, plain objects, primitives). */
-export function deepClone<T>(value: T): T {
+/** Deep clone a value (handles arrays, plain objects, cycles, primitives). */
+export function deepClone<T>(value: T, seen = new Map<object, any>()): T {
   if (value === null || value === undefined) return value;
   if (typeof value !== "object") return value;
-  if (Array.isArray(value)) return value.map(deepClone) as T;
-  if (value instanceof Set) return new Set([...value]) as T;
-  if (value instanceof Map) return new Map([...value].map(([k, v]) => [k, deepClone(v)])) as T;
+  if (seen.has(value as object)) {
+    return seen.get(value as object);
+  }
+  if (Array.isArray(value)) {
+    const arr: any[] = [];
+    seen.set(value as object, arr);
+    for (let i = 0; i < value.length; i++) {
+      arr[i] = deepClone(value[i], seen);
+    }
+    return arr as T;
+  }
+  if (value instanceof Set) {
+    const set = new Set();
+    seen.set(value as object, set);
+    for (const item of value) set.add(deepClone(item, seen));
+    return set as T;
+  }
+  if (value instanceof Map) {
+    const map = new Map();
+    seen.set(value as object, map);
+    for (const [k, v] of value) map.set(k, deepClone(v, seen));
+    return map as T;
+  }
   const obj: Record<string, unknown> = {};
+  seen.set(value as object, obj);
   for (const key of Object.keys(value as Record<string, unknown>)) {
-    obj[key] = deepClone((value as Record<string, unknown>)[key]);
+    obj[key] = deepClone((value as Record<string, unknown>)[key], seen);
   }
   return obj as T;
+}
+
+/** Check if a value is a ListNode object. */
+export function isListNode(v: unknown): boolean {
+  return v !== null && typeof v === "object" && "val" in v && ("next" in v || (v as any).next === null);
 }
 
 /** Names that are auto-detected as index pointers into arrays. */
@@ -89,6 +115,8 @@ export function detectStructures(variables: Record<string, unknown>): Record<str
       structures[name] = [...value];
     } else if (value instanceof Map) {
       structures[name] = Object.fromEntries(value);
+    } else if (isListNode(value)) {
+      structures[name] = deepClone(value);
     }
   }
   return structures;

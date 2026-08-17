@@ -93,6 +93,59 @@ export function parseSingleParamValue(
     return { ok: true, value: matrix };
   }
 
+  if (type === "linkedlist") {
+    if (trimmed === "null" || trimmed === "NULL" || trimmed === "nullptr" || trimmed === "None" || trimmed === "[]") {
+      return { ok: true, value: null };
+    }
+
+    let values: number[] = [];
+
+    // Check if arrow separated: 1 -> 2 -> 3 -> 4 -> 5
+    if (trimmed.includes("->")) {
+      const parts = trimmed.split("->").map((s) => s.trim()).filter((s) => s && s.toLowerCase() !== "null");
+      for (const p of parts) {
+        const n = Number(p);
+        if (isNaN(n)) return { ok: false, message: `Invalid node value "${p}"` };
+        values.push(n);
+      }
+    } else if (trimmed.startsWith("[")) {
+      try {
+        const parsed = JSON.parse(trimmed);
+        if (Array.isArray(parsed)) {
+          values = parsed.map(Number);
+        }
+      } catch {
+        const inner = trimmed.replace(/^\[|\]$/g, "");
+        const parts = inner.split(/[\s,]+/).filter(Boolean);
+        values = parts.map(Number);
+      }
+    } else if (trimmed.includes(",")) {
+      const parts = trimmed.split(",").map((s) => s.trim()).filter(Boolean);
+      values = parts.map(Number);
+    } else if (/^\d+$/.test(trimmed)) {
+      // Shorthand digits like "123" -> [1, 2, 3] or "5" -> [5]
+      if (trimmed.length > 1) {
+        values = trimmed.split("").map(Number);
+      } else {
+        values = [Number(trimmed)];
+      }
+    } else {
+      const n = Number(trimmed);
+      if (!isNaN(n)) values = [n];
+      else return { ok: false, message: `Invalid linked list value "${trimmed}"` };
+    }
+
+    if (values.some(isNaN)) {
+      return { ok: false, message: `Invalid numbers in linked list: "${trimmed}"` };
+    }
+
+    let head: any = null;
+    for (let i = values.length - 1; i >= 0; i--) {
+      head = { val: values[i]!, next: head };
+    }
+    return { ok: true, value: head };
+  }
+
   if (type === "boolean") {
     if (trimmed === "true") return { ok: true, value: true };
     if (trimmed === "false") return { ok: true, value: false };
@@ -121,6 +174,7 @@ export function getDefaultParamValue(name: string, type: InferredType, codeDefau
   if (codeDefault !== undefined) {
     return typeof codeDefault === "object" ? JSON.stringify(codeDefault) : String(codeDefault);
   }
+  if (type === "linkedlist") return "[1, 2, 3, 4, 5]";
   if (type === "number[]") return "e.g. [1, 2, 3]";
   if (type === "number[][]") return "e.g. [[1, 2], [3, 4]]";
   if (type === "number") return "e.g. 5";
