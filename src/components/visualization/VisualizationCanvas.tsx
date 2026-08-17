@@ -44,18 +44,26 @@ export function VisualizationCanvas() {
 
   const snapshot = structure ? viz.structures[structure] : undefined;
 
+  const is3DArray = (v: unknown): boolean =>
+    Array.isArray(v) && Array.isArray(v[0]) && Array.isArray(v[0][0]);
+
+  const isDPName = (name: string | null): boolean =>
+    !!name && /^(dp|memo|cache|table|opt|cost|ans)/i.test(name);
+
   const resolved: VisualizationType =
     visualizationType !== "auto"
       ? visualizationType
       : hasGraphOrQueue
         ? "multiple"
-        : isRecursionTrace
-          ? "recursion"
-          : asMatrix(snapshot)
-            ? "matrix"
-            : asArray(snapshot)
-              ? "array"
-              : "variables";
+        : isDPName(structure) || is3DArray(snapshot)
+          ? "dp"
+          : isRecursionTrace
+            ? "recursion"
+            : asMatrix(snapshot)
+              ? "matrix"
+              : asArray(snapshot)
+                ? "array"
+                : "variables";
 
   const prevVariables = events[Math.max(0, viz.step - 1)]?.variables;
 
@@ -101,22 +109,31 @@ export function VisualizationCanvas() {
             changedCells={viz.changedCells}
             changeTypes={viz.changeTypes}
           />
+        ) : is3DArray(data) ? (
+          <DPVisualizer
+            values={data}
+            label={name ?? structure ?? "matrix"}
+            changedCells={viz.changedCells}
+            changeTypes={viz.changeTypes}
+            dependencyCells={viz.dependencyCells}
+            currentCell={viz.highlightedCells[0]}
+            variables={viz.variables}
+          />
         ) : (
           <EmptyState title="Not a matrix" description={`"${name ?? structure}" isn't a 2D structure on this step.`} />
         );
       }
       case "dp": {
-        const m = asMatrix(data);
-        const a = asArray(data);
-        return m || a ? (
+        return data !== undefined && data !== null ? (
           <DPVisualizer
-            values={(m ?? a)!}
+            values={data}
             label={name ?? structure ?? "dp"}
             changedCells={viz.changedCells}
             changeTypes={viz.changeTypes}
             dependencyCells={viz.dependencyCells}
             currentCell={viz.highlightedCells[0]}
             recurrence={viz.recurrence}
+            variables={viz.variables}
           />
         ) : (
           <EmptyState title="No table" description="This step has no DP table snapshot." />

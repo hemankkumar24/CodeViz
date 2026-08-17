@@ -39,6 +39,7 @@ export function VisualizationControls() {
           options={[
             { value: "1D" as const, label: "1D table" },
             { value: "2D" as const, label: "2D table" },
+            { value: "3D" as const, label: "3D tensor" },
           ]}
           onChange={(value) => dispatch({ type: "setDpDimensions", value })}
         />
