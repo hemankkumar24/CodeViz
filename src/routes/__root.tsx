@@ -77,12 +77,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "VizCode" },
+      { title: "CodeViz" },
       {
         name: "description",
         content: "A visual debugger for algorithms — step through code and watch state change in real time.",
       },
-      { property: "og:title", content: "VizCode" },
+      { property: "og:title", content: "CodeViz" },
       {
         property: "og:description",
         content: "Step through algorithm code and watch arrays, DP tables and call stacks change.",

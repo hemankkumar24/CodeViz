@@ -1,4 +1,4 @@
-# VizCode
+# CodeViz
 
 <div align="center">
   <p align="center">
@@ -17,22 +17,22 @@
 
 <!-- Screenshot Placeholder: Hero / Landing Overview -->
 <div align="center">
-  <img src="assets/hero-banner.png" alt="VizCode Hero Banner" width="100%" />
+  <img src="assets/hero-banner.png" alt="CodeViz Hero Banner" width="100%" />
   <p><em>Interactive landing experience with live step-by-step algorithm animation</em></p>
 </div>
 
 ## Overview
 
-**VizCode** is a visual debugger and algorithm execution visualizer built for understanding code execution rather than just viewing the final output. 
+**CodeViz** is a visual debugger and algorithm execution visualizer built for understanding code execution rather than just viewing the final output. 
 
-Instead of mentally parsing complex loops, recursion trees, and state transitions, VizCode instruments algorithm source code, captures a deterministic execution trace, and renders every state change—array cell mutations, pointer movements, dynamic programming table fills, and call stack frames—step by step.
+Instead of mentally parsing complex loops, recursion trees, and state transitions, CodeViz instruments algorithm source code, captures a deterministic execution trace, and renders every state change—array cell mutations, pointer movements, dynamic programming table fills, and call stack frames—step by step.
 
 ---
 
 <!-- Screenshot Placeholder: Interactive Workspace -->
 <div align="center">
-  <img src="assets/workspace-demo.png" alt="VizCode Workspace Interface" width="100%" />
-  <p><em>VizCode Workspace: Synchronized Code Editor, Visualizer Canvas, and Timeline Scrubber</em></p>
+  <img src="assets/workspace-demo.png" alt="CodeViz Workspace Interface" width="100%" />
+  <p><em>CodeViz Workspace: Synchronized Code Editor, Visualizer Canvas, and Timeline Scrubber</em></p>
 </div>
 
 ---
@@ -132,10 +132,10 @@ npm run preview
 ## 📁 Project Structure
 
 ```
-VizCode/
+CodeViz/
 ├── public/                     # Static assets (favicons, manifest, icons)
-│   ├── favicon.svg             # VizCode SVG vector logo
-│   └── favicon.ico             # VizCode multi-resolution ICO
+│   ├── favicon.svg             # CodeViz SVG vector logo
+│   └── favicon.ico             # CodeViz multi-resolution ICO
 ├── src/
 │   ├── components/
 │   │   ├── editor/             # Code editor & visualization configuration panels
@@ -153,7 +153,7 @@ VizCode/
 │   │   ├── visualize.tsx       # Main interactive visualizer workspace
 │   │   ├── examples.tsx        # Algorithm library & catalog
 │   │   ├── learn.tsx           # Educational visual explanations
-│   │   └── about.tsx           # About VizCode
+│   │   └── about.tsx           # About CodeViz
 │   ├── state/                  # Workspace context & execution store
 │   ├── styles.css              # Tailwind CSS configuration & design tokens
 │   └── types/                  # TypeScript definitions for execution & languages

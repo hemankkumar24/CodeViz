@@ -22,13 +22,13 @@ export const Route = createFileRoute("/visualize")({
   validateSearch: searchSchema,
   head: () => ({
     meta: [
-      { title: "VizCode" },
+      { title: "CodeViz" },
       {
         name: "description",
         content:
           "Algorithm visualization workspace. Run custom code and watch arrays, DP tables, and variables update step by step.",
       },
-      { property: "og:title", content: "VizCode" },
+      { property: "og:title", content: "CodeViz" },
       {
         property: "og:description",
         content: "Paste an algorithm, add input, and step through every state change.",

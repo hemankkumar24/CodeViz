@@ -86,7 +86,7 @@ export function Footer() {
       <div className="border-t border-hairline">
         <div className="mx-auto flex w-full max-w-[1400px] flex-col gap-3 px-6 py-6 text-[12px] text-text-tertiary sm:flex-row sm:items-center sm:justify-between">
           <Logo showWordmark={true} />
-          <p className="font-mono">© {new Date().getFullYear()} VizCode</p>
+          <p className="font-mono">© {new Date().getFullYear()} CodeViz</p>
           <p>Built for developers.</p>
         </div>
       </div>
