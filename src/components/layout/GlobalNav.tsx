@@ -68,7 +68,7 @@ export function GlobalNav() {
             )}
           </button>
           <a
-            href="https://github.com/hemankkumar24/VizCode"
+            href="https://github.com/hemankkumar24/CodeViz"
             target="_blank"
             rel="noreferrer"
             className="hidden h-9 w-9 items-center justify-center rounded-[9px] text-text-tertiary transition-colors hover:bg-surface-2/70 hover:text-foreground sm:inline-flex"

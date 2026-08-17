@@ -96,10 +96,10 @@ Instead of mentally parsing complex loops, recursion trees, and state transition
 
 ```bash
 # Clone the repository
-git clone https://github.com/hemankkumar24/VizCode.git
+git clone https://github.com/hemankkumar24/CodeViz.git
 
 # Navigate to project directory
-cd VizCode
+cd CodeViz
 
 # Install dependencies
 npm install
@@ -167,7 +167,7 @@ VizCode/
 
 Contributions, issues, and feature requests are welcome!
 
-1. Fork the Project ([https://github.com/hemankkumar24/VizCode](https://github.com/hemankkumar24/VizCode))
+1. Fork the Project ([https://github.com/hemankkumar24/CodeViz](https://github.com/hemankkumar24/CodeViz))
 2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
 3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
 4. Push to the Branch (`git push origin feature/AmazingFeature`)

@@ -63,7 +63,7 @@ export function Footer() {
             </li>
             <li>
               <a
-                href="https://github.com/hemankkumar24/VizCode"
+                href="https://github.com/hemankkumar24/CodeViz"
                 target="_blank"
                 rel="noreferrer"
                 className="text-[13.5px] text-text-secondary hover:text-foreground"
