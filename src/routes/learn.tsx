@@ -7,13 +7,13 @@ import { useSmoothScroll } from "@/hooks/useSmoothScroll";
 export const Route = createFileRoute("/learn")({
   head: () => ({
     meta: [
-      { title: "Learn Algorithms Visually — CodeVisualizer" },
+      { title: "Learn Algorithms Visually — CodeViz" },
       {
         name: "description",
         content:
           "Short, visual explainers on dynamic programming, recursion and the sliding window, each linked to a runnable trace.",
       },
-      { property: "og:title", content: "Learn Algorithms Visually — CodeVisualizer" },
+      { property: "og:title", content: "Learn Algorithms Visually — CodeViz" },
       {
         property: "og:description",
         content: "Visual explainers on DP, recursion and sliding window, linked to runnable traces.",

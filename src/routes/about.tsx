@@ -7,13 +7,13 @@ import { useSmoothScroll } from "@/hooks/useSmoothScroll";
 export const Route = createFileRoute("/about")({
   head: () => ({
     meta: [
-      { title: "About CodeVisualizer" },
+      { title: "About CodeViz" },
       {
         name: "description",
         content:
-          "CodeVisualizer turns algorithm code into a stepped, visual trace so you can see state change instead of imagining it.",
+          "CodeViz turns algorithm code into a stepped, visual trace so you can see state change instead of imagining it.",
       },
-      { property: "og:title", content: "About CodeVisualizer" },
+      { property: "og:title", content: "About CodeViz" },
       {
         property: "og:description",
         content: "Why we built a visual debugger for algorithms, and what runs under the hood.",
@@ -30,15 +30,18 @@ function AboutPage() {
     <div className="flex min-h-screen flex-col bg-background">
       <GlobalNav />
 
-      <main className="mx-auto w-full max-w-[760px] flex-1 px-6 py-20">
-        <h1 className="text-[34px] font-semibold leading-tight tracking-[-0.02em] text-foreground">
+      <main className="mx-auto w-full max-w-[760px] flex-1 px-6 py-16 sm:py-24">
+        <span className="font-mono text-[11.5px] uppercase tracking-wider text-text-tertiary">
+          About
+        </span>
+        <h1 className="mt-2 text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
           Built to make state visible
         </h1>
 
         <div className="mt-8 space-y-6 text-[15px] leading-relaxed text-text-secondary">
           <p>
             Reading an algorithm means simulating it in your head: which index moved, which cell was
-            written, what the stack looked like three calls ago. CodeVisualizer does that simulation
+            written, what the stack looked like three calls ago. CodeViz does that simulation
             for you and draws it, one step at a time.
           </p>
           <p>

@@ -36,7 +36,7 @@ export function GlobalNav() {
       )}
     >
       <div className="mx-auto flex h-14 w-full max-w-[1400px] items-center gap-6 px-4 sm:px-6">
-        <Link to="/" aria-label="CodeVisualizer home">
+        <Link to="/" aria-label="CodeViz home">
           <Logo />
         </Link>
 

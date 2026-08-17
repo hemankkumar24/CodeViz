@@ -14,13 +14,13 @@ export const Route = createFileRoute("/examples")({
   validateSearch: searchSchema,
   head: () => ({
     meta: [
-      { title: "Algorithm Examples — CodeVisualizer" },
+      { title: "Algorithm Examples — CodeViz" },
       {
         name: "description",
         content:
           "Browse traced algorithms — sorting, searching, sliding window, dynamic programming and recursion — and open each one in the visualizer.",
       },
-      { property: "og:title", content: "Algorithm Examples — CodeVisualizer" },
+      { property: "og:title", content: "Algorithm Examples — CodeViz" },
       {
         property: "og:description",
         content: "Traced sorting, searching, DP and recursion examples ready to step through.",
