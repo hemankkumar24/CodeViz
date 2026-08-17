@@ -239,7 +239,7 @@ type State = {
   paramValues: Record<string, string>;
   visualizationType: VisualizationType;
   selectedVariable: string | null;
-  dpDimensions: "1D" | "2D";
+  dpDimensions: "1D" | "2D" | "3D";
   multiSelection: string[];
   events: InternalExecutionEvent[];
   currentStep: number;
@@ -291,7 +291,7 @@ type Action =
   | { type: "setParamValues"; values: Record<string, string> }
   | { type: "setVisualizationType"; value: VisualizationType }
   | { type: "setSelectedVariable"; value: string | null }
-  | { type: "setDpDimensions"; value: "1D" | "2D" }
+  | { type: "setDpDimensions"; value: "1D" | "2D" | "3D" }
   | { type: "toggleMulti"; value: string }
   | { type: "loadExample"; example: Example }
   | { type: "setExecuting" }
@@ -594,8 +594,24 @@ function useWorkspaceInternal() {
   const structure = useMemo(() => {
     if (state.selectedVariable) return state.selectedVariable;
     const first = state.events[state.currentStep]?.snapshots;
-    return first ? (Object.keys(first)[0] ?? null) : null;
-  }, [state.selectedVariable, state.events, state.currentStep]);
+    if (!first) return null;
+    const keys = Object.keys(first);
+    if (!keys.length) return null;
+
+    // If DP visualization is requested, prioritize DP/memo variables
+    if (state.visualizationType === "dp") {
+      const dpKey = keys.find((k) => /^(dp|memo|cache|table|opt|cost|ans)/i.test(k));
+      if (dpKey) return dpKey;
+    }
+
+    // In auto mode, if a DP table exists, prioritize it
+    if (state.visualizationType === "auto") {
+      const dpKey = keys.find((k) => /^(dp|memo|cache|table|opt)/i.test(k));
+      if (dpKey) return dpKey;
+    }
+
+    return keys[0] ?? null;
+  }, [state.selectedVariable, state.events, state.currentStep, state.visualizationType]);
 
   const viz = useMemo(
     () => selectVisualizationState({ events: state.events, currentStep: state.currentStep }, structure),
